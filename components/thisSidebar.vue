@@ -1,33 +1,26 @@
 <template>
-  <div><p>sidebar</p></div>
-  <div class="flex">
-    <!-- Sidebar -->
-    <Sidebar v-model:visible="visible" :showCloseIcon="false" class="hidden md:block w-64">
-      <h2 class="p-4">Dashboard</h2>
-      <ul class="p-4">
-        <li><a href="/" class="block p-2">🏠 Home</a></li>
-        <li><a href="/profile" class="block p-2">👤 Profile</a></li>
-        <li><a href="/settings" class="block p-2">⚙️ Settings</a></li>
-      </ul>
-    </Sidebar>
+  <div class="flex h-screen">
+      <div class="">
 
-    <!-- Main Content -->
-    <div class="flex-1 p-4">
-      <Button icon="pi pi-bars" class="md:hidden" @click="visible = true" />
-      <slot />
-    </div>
+      </div>
+      <Menu class="pt-5" :model="items" />
+
   </div>
 </template>
 
 <script setup>
 import { ref } from "vue";
+import { PrimeIcons } from "@primevue/core/api";
 
-const visible = ref(true);
+const items = ref([
+
+  {
+    label: "Main Desk",
+    icon: PrimeIcons.HOME
+  },
+  {
+    label: "Analytics",
+    icon: PrimeIcons.CHART_BAR
+  }
+]);
 </script>
-
-<style>
-ul {
-  list-style: none;
-  padding: 0;
-}
-</style>
