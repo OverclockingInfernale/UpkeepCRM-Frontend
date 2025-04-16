@@ -7,7 +7,7 @@ export default defineNuxtConfig({
     '@primevue/nuxt-module'
   ],
   compatibilityDate: '2024-11-01',
-  css: ['assets/css/style.css'],
+  css: ['/assets/tailwind.css', 'assets/css/style.css'],
   devtools: {enabled: true},
 
   auth: {
