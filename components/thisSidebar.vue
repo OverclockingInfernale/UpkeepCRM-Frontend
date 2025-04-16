@@ -1,7 +1,6 @@
 <template>
   <div class="flex h-screen">
       <div class="">
-
       </div>
       <Menu class="pt-5" :model="items" />
 

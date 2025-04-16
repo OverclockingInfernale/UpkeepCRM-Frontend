@@ -5,6 +5,7 @@
     </InputGroupAddon>
     <InputText placeholder="Search..."/>
   </InputGroup>
+
 </template>
 
 <script>

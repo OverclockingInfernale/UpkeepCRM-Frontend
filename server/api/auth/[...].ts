@@ -44,10 +44,30 @@ export default NuxtAuthHandler ({
                     }
                 },
                 checks: ["pkce", "state"],
+
             }
     ],
+    callbacks: {
+      async jwt({token, account})  {
+          return token;
+      },
+      async session({session, token}){
+          // @ts-ignore
+          session.access_token = token.access_token
+          // @ts-ignore
+          session.id_token = token.id_token
+          return session
+      }
+    },
     events: {
-        async signIn(message) { console.log('Authorized')},
+        async signIn(message) {
+            console.log('Authorized')
+            console.log()
+        },
+        // async signOut(message){
+        //     const logoutUrl = 'http://sandbox.tailaf6362.ts.net:49153/realms/dev/protocol/openid-connect/logout'
+        //     const redirectUri = 'http://localhost:3000'
+        //     return sendRedirect(message., `${logoutUrl}?post_logout_redirect_uri=${encodeURIComponent(redirectUri)}`)        }
     },
     pages: {
         signIn: '/login',
