@@ -28,15 +28,10 @@ export default NuxtAuthHandler ({
                     }
                 },
 
-
-
-                userinfo: {
-                    url: 'http://sandbox.tailaf6362.ts.net:49153/realms/dev/protocol/openid-connect/userinfo'
-                },
-
                 jwks_endpoint: 'http://sandbox.tailaf6362.ts.net:49153/realms/dev/protocol/openid-connect/certs',
 
                 profile(profile) {
+                    console.log('this is profile:', profile)
                     return {
                         id: profile.sub,
                         name: profile.username,
@@ -56,7 +51,10 @@ export default NuxtAuthHandler ({
           session.access_token = token.access_token
           // @ts-ignore
           session.id_token = token.id_token
+
+          // @ts-ignore
           return session
+
       }
     },
     events: {

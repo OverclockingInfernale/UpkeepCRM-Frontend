@@ -23,7 +23,6 @@ export default defineComponent({
 
     <div class="main-content col-start-2 col-end-6 mt-4">
       <thisNavbar class="col-start-2 col-end-6"/>
-      <logout-button/>
         <div class="info-content grid grid-cols-4 grid-rows-6 gap-4">
           <div class="col-span-4">
 
