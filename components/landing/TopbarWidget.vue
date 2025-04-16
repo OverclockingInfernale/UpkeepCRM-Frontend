@@ -67,7 +67,7 @@ function smoothScroll(id) {
             </li>
         </ul>
         <div class="flex border-t lg:border-t-0 border-surface py-4 lg:py-0 mt-4 lg:mt-0 gap-2">
-            <Button @click="signIn('keycloak')" label="Login" rounded></Button>
+            <Button class="text-white" @click="signIn('keycloak')" label="Log in" rounded>Log in</Button>
         </div>
     </div>
 </template>
