@@ -7,7 +7,7 @@ export default defineNuxtConfig({
     '@primevue/nuxt-module'
   ],
   compatibilityDate: '2024-11-01',
-  css: ['/assets/tailwind.css', 'assets/css/style.css'],
+  css: ['/assets/styles.scss', 'assets/css/style.css'],
   devtools: {enabled: true},
 
   auth: {
@@ -28,6 +28,7 @@ export default defineNuxtConfig({
       theme: {
         preset: Aura,
         options: {
+          darkModeSelector: '.app-dark',
           cssLayer: {
             name: 'primevue',
             order: 'theme, base, primevue'

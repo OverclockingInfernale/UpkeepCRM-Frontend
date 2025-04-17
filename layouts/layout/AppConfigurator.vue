@@ -1,5 +1,5 @@
 <script setup>
-import { useLayout } from '@/layouts/layout/composables/use-layout.vue';
+import { useLayout } from '~/layouts/layout/composables/use-layout.vue';
 import { $t, updatePreset, updateSurfacePalette } from '@primevue/themes';
 import Aura from '@primevue/themes/aura';
 import Lara from '@primevue/themes/lara';

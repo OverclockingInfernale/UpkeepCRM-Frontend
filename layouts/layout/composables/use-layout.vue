@@ -71,5 +71,4 @@ export function useLayout() {
     toggleDarkMode
   };
 }
-
 </script>
