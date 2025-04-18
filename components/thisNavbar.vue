@@ -3,6 +3,14 @@ import AppConfigurator from "~/layouts/layout/AppConfigurator.vue";
 import { useLayout } from '~/layouts/layout/composables/use-layout.vue';
 const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
 
+const {status, data: session, getSession} = useAuth()
+const { signOut } = useAuth()
+function handleLogout() {
+  signOut({
+    callbackUrl: '/login'  // Send them to our own logout route
+  })
+}
+
 </script>
 
 <template>
@@ -46,12 +54,11 @@ const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
             <span>Calendar</span>
           </button>
           <button type="button" class="layout-topbar-action">
-            <i class="pi pi-inbox"></i>
-            <span>Messages</span>
-          </button>
-          <button type="button" class="layout-topbar-action">
             <i class="pi pi-user"></i>
             <span>Profile</span>
+          </button>
+          <button @click="handleLogout" type="button" class="layout-topbar-action">
+            <i class="pi pi-sign-out"></i>
           </button>
         </div>
       </div>

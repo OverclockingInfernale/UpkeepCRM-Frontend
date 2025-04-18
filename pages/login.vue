@@ -7,6 +7,7 @@ import HighlightsWidget from '@/components/landing/HighlightsWidget.vue';
 import PricingWidget from '@/components/landing/PricingWidget.vue';
 
   definePageMeta({
+    layout: false,
     auth: {unauthenticatedOnly: true, navigateAuthenticatedTo: '/about'}
   })
 
