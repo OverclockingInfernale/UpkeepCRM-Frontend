@@ -2,12 +2,14 @@
 import {defineComponent} from "vue";
 import ThisSidebar from "~/components/thisSidebar.vue";
 import ThisNavbar from "~/components/thisNavbar.vue";
+import Schedule from "~/components/dashboard/schedule.vue";
+import Chats from "~/components/dashboard/chats.vue";
 
 definePageMeta({
   auth: true
 })
 export default defineComponent({
-  components: {ThisSidebar, ThisNavbar}
+  components: {Chats, Schedule, ThisSidebar, ThisNavbar}
 })
 
 // const {data: session} = useSession()
@@ -20,17 +22,14 @@ export default defineComponent({
 <template>
   <div class="">
 
-    <div class="main-content">
-        <div class="">
+    <div class="grid grid-cols-12 gap-8">
 
-          <h1 class=" text-center text-4xl">testemail@com</h1>
-
-          <div class="">
-            <ThisMenuBar />
-          </div>
-
-        </div>
-
+      <div class="col-span-12 xl:col-span-6">
+        <schedule/>
+      </div>
+      <div class="col-span-12 xl:col-span-6">
+        <chats/>
+      </div>
     </div>
 
   </div>
