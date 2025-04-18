@@ -31,7 +31,6 @@ export default NuxtAuthHandler ({
                 jwks_endpoint: 'http://sandbox.tailaf6362.ts.net:49153/realms/dev/protocol/openid-connect/certs',
 
                 profile(profile) {
-                    console.log('this is profile:', profile)
                     return {
                         id: profile.sub,
                         name: profile.username,
@@ -43,24 +42,49 @@ export default NuxtAuthHandler ({
             }
     ],
     callbacks: {
-      async jwt({token, account})  {
-          return token;
-      },
-      async session({session, token}){
-          // @ts-ignore
-          session.access_token = token.access_token
-          // @ts-ignore
-          session.id_token = token.id_token
+        async jwt({ token, account }) {
+            // When logging in
+            if (account) {
+                token.accessToken = account.access_token
+                token.refreshToken = account.refresh_token
+                token.expiresAt = Math.floor(Date.now() / 1000) + account.expires_at
+            }
 
-          // @ts-ignore
-          return session
+            // If token is expired, refresh it
+            if (Date.now() >= token.expiresAt * 1000) {
+                try {
+                    const response = await fetch('http://sandbox.tailaf6362.ts.net:49153/realms/dev/openid-connect/token', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: new URLSearchParams({
+                            grant_type: 'refresh_token',
+                            refresh_token: token.refreshToken,
+                            client_id: 'console',
+                            client_secret: ''
+                        })
+                    })
 
-      }
+                    const refreshed = await response.json()
+                    token.accessToken = refreshed.access_token
+                    token.refreshToken = refreshed.refresh_token
+                    token.expiresAt = Math.floor(Date.now() / 1000) + refreshed.expires_in
+                } catch (e) {
+                    console.error('Failed to refresh token', e)
+                }
+            }
+
+            return token
+        },
+
+        async session({ session, token }) {
+            session.accessToken = token.accessToken
+            return session
+        }
     },
     events: {
         async signIn(message) {
-            console.log('Authorized')
-            console.log()
         },
         // async signOut(message){
         //     const logoutUrl = 'http://sandbox.tailaf6362.ts.net:49153/realms/dev/protocol/openid-connect/logout'

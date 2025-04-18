@@ -12,7 +12,9 @@ export default defineNuxtConfig({
 
   auth: {
     globalAppMiddleware: true,
-
+    session: {
+      strategy: 'jwt'
+    }
   },
 
 
