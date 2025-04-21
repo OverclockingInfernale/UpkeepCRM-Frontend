@@ -1,11 +1,11 @@
 
 export default defineEventHandler(async (event) => {
+    const config = useRuntimeConfig()
     const headers = getRequestHeaders(event) as HeadersInit
   const token = await $fetch('/api/token', { headers })
-
-    // @ts-ignore
-    const response = await $fetch('http://sandbox.tailaf6362.ts.net:49154/api/orders', {
+    const response = await $fetch(`${config.api_url}/api/orders`, {
         headers: {
+            // @ts-ignore
             Authorization: `Bearer ${token.accessToken}`
         }
     })

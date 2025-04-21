@@ -10,6 +10,14 @@ export default defineNuxtConfig({
   css: ['/assets/styles.scss', 'assets/css/style.css'],
   devtools: {enabled: true},
 
+  runtimeConfig: {
+    api_url: process.env.API_URL || '',
+
+    public: {
+      host_url: process.env.HOST || ''
+    }
+  },
+
   auth: {
     globalAppMiddleware: true,
     session: {
