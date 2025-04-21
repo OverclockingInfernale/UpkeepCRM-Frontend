@@ -39,7 +39,10 @@ const items = ref([
   },
   {
     label: "Inventory",
-    icon: PrimeIcons.BOX
+    icon: PrimeIcons.BOX,
+    command: () => {
+      router.push('/resources')
+    }
   },
 
 ]);

@@ -1,11 +1,11 @@
 <script setup>
-import { ProductService } from '@/service/ProductService';
+import { ProductService } from '~/service/ProductService.vue';
 import { FilterMatchMode } from '@primevue/core/api';
 import { useToast } from 'primevue/usetoast';
 import { onMounted, ref } from 'vue';
 
 onMounted(async() => {
-  const {data, error} = await useFetch('/api/getOrders')
+  const {data, error} = await useFetch('/api/getResources')
   console.log(data)
   if(data?.value){
     products.value = data.value.items;
@@ -164,13 +164,14 @@ function deleteSelectedProducts() {
           </div>
         </template>
 
-        <Column field="name" header="Order Name" sortable></Column>
-        <Column field="client.name" header="Client" sortable></Column>
-        <Column field="totalCost" header="Total Cost" sortable></Column>
-        <Column field="paymentMethod.name" header="Payment" sortable></Column>
-        <Column field="status.name" header="Status" sortable></Column>
-        <Column field="deadlineDate" header="Deadline" sortable></Column>
-        <Column field="assignedEmployee.name" header="Assigned To" sortable></Column>
+        <Column field="name" header="Name" sortable></Column>
+        <Column field="description" header="Description" sortable></Column>
+        <Column field="cost" header="Cost" sortable></Column>
+        <Column field="price" header="Price" sortable></Column>
+        <Column field="currentQuantity" header="Quantity" sortable></Column>
+        <Column field="type.name" header="Type" sortable></Column>
+        <Column field="unit" header="Unit" sortable></Column>
+
 
       </DataTable>
     </div>
@@ -217,7 +218,7 @@ function deleteSelectedProducts() {
         <div class="grid grid-cols-12 gap-4">
           <div class="col-span-6">
             <label for="price" class="block font-bold mb-3">Price</label>
-            <InputNumber id="price" v-model="product.price" mode="currency" currency="USD" locale="en-US" fluid />
+            <InputNumber id="price" v-model="product.price" mode="currency" currency="KZT" locale="en-US" fluid />
           </div>
           <div class="col-span-6">
             <label for="quantity" class="block font-bold mb-3">Quantity</label>
