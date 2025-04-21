@@ -81,10 +81,10 @@ export default NuxtAuthHandler ({
             return token
         },
 
-        async session({session, token}) {
-            session.accessToken = token.accessToken
-            return session
-        }
+        // async session({session, token}){
+        //     session.accessToken = token.accessToken
+        //     session.expires = to
+        // }
     },
     events: {
         async signIn(message) {
