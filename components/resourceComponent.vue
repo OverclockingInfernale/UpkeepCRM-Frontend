@@ -4,6 +4,25 @@ import { FilterMatchMode } from '@primevue/core/api';
 import { useToast } from 'primevue/usetoast';
 import { onMounted, ref } from 'vue';
 
+const toast = useToast();
+const dt = ref();
+const products = ref();
+const resourceDialog = ref(false);
+const deleteProductDialog = ref(false);
+const deleteProductsDialog = ref(false);
+const resource = ref({});
+const selectedProducts = ref();
+const filters = ref({
+  global: { value: null, matchMode: FilterMatchMode.CONTAINS }
+});
+const submitted = ref(false);
+const resourceTypes = ref([]);
+
+function formatCurrency(value) {
+  if (value) return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+  return;
+}
+
 onMounted(async() => {
   const {data, error} = await useFetch('/api/getResources')
   console.log(data)
@@ -16,65 +35,62 @@ onMounted(async() => {
   }
 });
 
-const toast = useToast();
-const dt = ref();
-const products = ref();
-const productDialog = ref(false);
-const deleteProductDialog = ref(false);
-const deleteProductsDialog = ref(false);
-const product = ref({});
-const selectedProducts = ref();
-const filters = ref({
-  global: { value: null, matchMode: FilterMatchMode.CONTAINS }
+onMounted( async () => {
+  try {
+    const {data} = await useFetch('/api/getResourceTypes');
+    if (data?.value.items) {
+      resourceTypes.value = data?.value.items.map(item => ({
+        label: item.name,
+        value: item.id
+      }));
+    } else {
+      console.warn('No items in response');
+    }
+  } catch (error) {
+    console.error('Failed to fetch resource types', error);
+  }
 });
-const submitted = ref(false);
-const statuses = ref([
-  { label: 'INSTOCK', value: 'instock' },
-  { label: 'LOWSTOCK', value: 'lowstock' },
-  { label: 'OUTOFSTOCK', value: 'outofstock' }
-]);
-
-function formatCurrency(value) {
-  if (value) return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-  return;
-}
-
 function openNew() {
-  product.value = {};
+  resource.value = {};
   submitted.value = false;
-  productDialog.value = true;
+  resourceDialog.value = true;
 }
 
 function hideDialog() {
-  productDialog.value = false;
+  resourceDialog.value = false;
   submitted.value = false;
 }
 
-function saveProduct() {
+async function saveResource() {
   submitted.value = true;
+  if (resource?.value.name?.trim()) {
+    try {
+      const payload = {
+        name: resource.value.name,
+        description: resource.value.description,
+        typeId: resource.value.typeId.value,
+        price: resource.value.price,
+        cost: resource.value.cost,
+        currentQuantity: resource.value.currentQuantity,
+        unit: null
+      };
 
-  if (product?.value.name?.trim()) {
-    if (product.value.id) {
-      product.value.inventoryStatus = product.value.inventoryStatus.value ? product.value.inventoryStatus.value : product.value.inventoryStatus;
-      products.value[findIndexById(product.value.id)] = product.value;
-      toast.add({ severity: 'success', summary: 'Successful', detail: 'Product Updated', life: 3000 });
-    } else {
-      product.value.id = createId();
-      product.value.code = createId();
-      product.value.image = 'product-placeholder.svg';
-      product.value.inventoryStatus = product.value.inventoryStatus ? product.value.inventoryStatus.value : 'INSTOCK';
-      products.value.push(product.value);
-      toast.add({ severity: 'success', summary: 'Successful', detail: 'Product Created', life: 3000 });
+      await $fetch('/api/getResources', {
+        method: resource.value.id ? 'PUT' :'POST',
+        body: payload
+      })
+
+    } catch (error){
+      console.error('Resource creation failed', error)
     }
 
-    productDialog.value = false;
-    product.value = {};
+    resource.value = {}
   }
 }
 
 function editProduct(prod) {
-  product.value = { ...prod };
-  productDialog.value = true;
+  resource.value = { ...prod };
+  resourceDialog.value = true;
 }
 
 function confirmDeleteProduct(prod) {
@@ -150,11 +166,11 @@ function deleteSelectedProducts() {
           :filters="filters"
           paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
           :rowsPerPageOptions="[5, 10, 25]"
-          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} products"
+          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} resources"
       >
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
-            <h4 class="m-0">Manage Orders</h4>
+            <h4 class="m-0">Manage Resources</h4>
             <IconField>
               <InputIcon>
                 <i class="pi pi-search" />
@@ -176,62 +192,50 @@ function deleteSelectedProducts() {
       </DataTable>
     </div>
 
-    <Dialog v-model:visible="productDialog" :style="{ width: '450px' }" header="Product Details" :modal="true">
+    <Dialog v-model:visible="resourceDialog" :style="{ width: '450px' }" header="Resource details" :modal="true">
       <div class="flex flex-col gap-6">
-        <img v-if="product.image" :src="`https://primefaces.org/cdn/primevue/images/product/${product.image}`" :alt="product.image" class="block m-auto pb-4" />
+        <img v-if="resource.image" :src="`https://primefaces.org/cdn/primevue/images/product/${resource.image}`" :alt="resource.image" class="block m-auto pb-4" />
+
         <div>
           <label for="name" class="block font-bold mb-3">Name</label>
-          <InputText id="name" v-model.trim="product.name" required="true" autofocus :invalid="submitted && !product.name" fluid />
-          <small v-if="submitted && !product.name" class="text-red-500">Name is required.</small>
-        </div>
-        <div>
-          <label for="description" class="block font-bold mb-3">Description</label>
-          <Textarea id="description" v-model="product.description" required="true" rows="3" cols="20" fluid />
-        </div>
-        <div>
-          <label for="inventoryStatus" class="block font-bold mb-3">Inventory Status</label>
-          <Select id="inventoryStatus" v-model="product.inventoryStatus" :options="statuses" optionLabel="label" placeholder="Select a Status" fluid></Select>
+          <InputText id="name" v-model.trim="resource.name" required="true" autofocus :invalid="submitted && !resource.name" fluid />
+          <small v-if="submitted && !resource.name" class="text-red-500">Name is required.</small>
         </div>
 
         <div>
-          <span class="block font-bold mb-4">Category</span>
-          <div class="grid grid-cols-12 gap-4">
-            <div class="flex items-center gap-2 col-span-6">
-              <RadioButton id="category1" v-model="product.category" name="category" value="Accessories" />
-              <label for="category1">Accessories</label>
-            </div>
-            <div class="flex items-center gap-2 col-span-6">
-              <RadioButton id="category2" v-model="product.category" name="category" value="Clothing" />
-              <label for="category2">Clothing</label>
-            </div>
-            <div class="flex items-center gap-2 col-span-6">
-              <RadioButton id="category3" v-model="product.category" name="category" value="Electronics" />
-              <label for="category3">Electronics</label>
-            </div>
-            <div class="flex items-center gap-2 col-span-6">
-              <RadioButton id="category4" v-model="product.category" name="category" value="Fitness" />
-              <label for="category4">Fitness</label>
-            </div>
-          </div>
+          <label for="description" class="block font-bold mb-3">Description</label>
+          <Textarea id="description" v-model="resource.description" required="true" rows="3" cols="20" fluid />
+        </div>
+
+        <div>
+          <label for="resourceType" class="block font-bold mb-3">Resource type</label>
+          <Select id="resourceType" v-model="resource.typeId" :options="resourceTypes" optionLabel="label" placeholder="Select a Type" />
         </div>
 
         <div class="grid grid-cols-12 gap-4">
-          <div class="col-span-6">
-            <label for="price" class="block font-bold mb-3">Price</label>
-            <InputNumber id="price" v-model="product.price" mode="currency" currency="KZT" locale="en-US" fluid />
+          <div class="col-span-4">
+            <label for="cost" class="block font-bold mb-3">Cost</label>
+            <InputNumber id="cost" v-model="resource.cost" mode="currency" currency="KZT" locale="en-US" fluid />
           </div>
-          <div class="col-span-6">
+
+          <div class="col-span-4">
+            <label for="price" class="block font-bold mb-3">Price</label>
+            <InputNumber id="price" v-model="resource.price" mode="currency" currency="KZT" locale="en-US" fluid />
+          </div>
+
+          <div class="col-span-4">
             <label for="quantity" class="block font-bold mb-3">Quantity</label>
-            <InputNumber id="quantity" v-model="product.quantity" integeronly fluid />
+            <InputNumber id="quantity" v-model="resource.currentQuantity" integeronly fluid />
           </div>
         </div>
       </div>
 
       <template #footer>
         <Button label="Cancel" icon="pi pi-times" text @click="hideDialog" />
-        <Button label="Save" icon="pi pi-check" @click="saveProduct" />
+        <Button label="Save" icon="pi pi-check" @click="saveResource" />
       </template>
     </Dialog>
+
 
     <Dialog v-model:visible="deleteProductDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
       <div class="flex items-center gap-4">
