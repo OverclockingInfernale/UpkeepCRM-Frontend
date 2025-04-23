@@ -12,6 +12,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     api_url: process.env.API_URL || '',
+    api_url_token: process.env.API_URL_TOKEN || '',
 
     public: {
       host_url: process.env.HOST || ''

@@ -33,8 +33,11 @@ const items = ref([
     icon: PrimeIcons.CALENDAR
   },
   {
-    label: "Order",
-    icon: PrimeIcons.SORT
+    label: "Services",
+    icon: PrimeIcons.LIST,
+    command: () => {
+      router.push('/services')
+    }
 
   },
   {

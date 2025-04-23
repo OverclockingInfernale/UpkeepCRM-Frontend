@@ -6,7 +6,7 @@ import Schedule from "~/components/dashboard/schedule.vue";
 import Chats from "~/components/dashboard/chats.vue";
 import OrderCard from "~/components/dashboard/orderCard.vue";
 
-
+console.log()
 
 </script>
 

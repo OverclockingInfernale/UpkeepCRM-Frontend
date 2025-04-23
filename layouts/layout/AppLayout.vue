@@ -6,8 +6,14 @@ import AppSidebar from './AppSidebar.vue';
 import AppTopbar from './AppTopbar.vue';
 
 const { layoutConfig, layoutState, isSidebarActive } = useLayout();
-
 const outsideClickListener = ref(null);
+const auth = useAuth()
+
+onMounted(() => {
+  setInterval(async () => {
+    const session = await auth.getSession()
+  }, 60_000)
+})
 
 watch(isSidebarActive, (newVal) => {
     if (newVal) {

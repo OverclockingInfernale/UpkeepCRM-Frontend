@@ -7,10 +7,10 @@ import { onMounted, ref } from 'vue';
 const toast = useToast();
 const dt = ref();
 const products = ref();
-const resourceDialog = ref(false);
+const serviceDialog = ref(false);
 const deleteProductDialog = ref(false);
 const deleteProductsDialog = ref(false);
-const resource = ref({});
+const services = ref({});
 const selectedProducts = ref();
 const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS }
@@ -24,7 +24,7 @@ function formatCurrency(value) {
 }
 
 onMounted(async() => {
-  const {data, error} = await useFetch('/api/getResources')
+  const {data, error} = await useFetch('/api/getServices')
   console.log(data)
   if(data?.value){
     products.value = data.value.items;
@@ -37,10 +37,12 @@ onMounted(async() => {
 
 onMounted( async () => {
   try {
-    const {data} = await useFetch('/api/getResourceTypes');
+    const {data} = await useFetch('/api/getServiceCategories');
+    console.log(data)
     if (data?.value.items) {
       resourceTypes.value = data?.value.items.map(item => ({
         label: item.name,
+        text: item.description,
         value: item.id
       }));
     } else {
@@ -51,47 +53,45 @@ onMounted( async () => {
   }
 });
 function openNew() {
-  resource.value = {};
+  services.value = {};
   submitted.value = false;
-  resourceDialog.value = true;
+  serviceDialog.value = true;
 }
 
 function hideDialog() {
-  resourceDialog.value = false;
+  serviceDialog.value = false;
   submitted.value = false;
 }
 
 async function saveResource() {
   submitted.value = true;
-  if (resource?.value.name?.trim()) {
+  if (services?.value.name?.trim()) {
     try {
       const payload = {
-        name: resource.value.name,
-        description: resource.value.description,
-        typeId: resource.value.typeId.value,
-        price: resource.value.price,
-        cost: resource.value.cost,
-        currentQuantity: resource.value.currentQuantity,
-        unit: null
+        name: services.value.name,
+        description: services.value.description,
+        category: services.value.category.value,
+        baseCost: services.value.baseCost,
+        manHours: services.value.manHours,
       };
 
-      await $fetch('/api/getResources', {
-        method: resource.value.id ? 'PUT' :'POST',
+      await $fetch('/api/getServices', {
+        method: services.value.id ? 'PUT' :'POST',
         body: payload
       })
 
     } catch (error){
-      console.error('Resource creation failed', error)
+      console.error('services creation failed', error)
     }
 
-    resourceDialog.value = false
-    resource.value = {}
+    serviceDialog.value = false
+    services.value = {}
   }
 }
 
 function editProduct(prod) {
-  resource.value = { ...prod };
-  resourceDialog.value = true;
+  services.value = { ...prod };
+  serviceDialog.value = true;
 }
 
 function confirmDeleteProduct(prod) {
@@ -167,11 +167,11 @@ function deleteSelectedProducts() {
           :filters="filters"
           paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
           :rowsPerPageOptions="[5, 10, 25]"
-          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} resources"
+          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} services"
       >
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
-            <h4 class="m-0">Manage Resources</h4>
+            <h4 class="m-0">Manage services</h4>
             <IconField>
               <InputIcon>
                 <i class="pi pi-search" />
@@ -183,50 +183,44 @@ function deleteSelectedProducts() {
 
         <Column field="name" header="Name" sortable></Column>
         <Column field="description" header="Description" sortable></Column>
-        <Column field="cost" header="Cost" sortable></Column>
-        <Column field="price" header="Price" sortable></Column>
-        <Column field="currentQuantity" header="Quantity" sortable></Column>
-        <Column field="type.name" header="Type" sortable></Column>
-        <Column field="unit" header="Unit" sortable></Column>
+        <Column field="baseCost" header="Base Cost" sortable></Column>
+        <Column field="manHours" header="Man hours" sortable></Column>
+        <Column field="category.name" header="Category" sortable></Column>
+
 
 
       </DataTable>
     </div>
 
-    <Dialog v-model:visible="resourceDialog" :style="{ width: '450px' }" header="Resource details" :modal="true">
+    <Dialog v-model:visible="serviceDialog" :style="{ width: '450px' }" header="Services details" :modal="true">
       <div class="flex flex-col gap-6">
-        <img v-if="resource.image" :src="`https://primefaces.org/cdn/primevue/images/product/${resource.image}`" :alt="resource.image" class="block m-auto pb-4" />
+        <img v-if="services.image" :src="`https://primefaces.org/cdn/primevue/images/product/${services.image}`" :alt="services.image" class="block m-auto pb-4" />
 
         <div>
           <label for="name" class="block font-bold mb-3">Name</label>
-          <InputText id="name" v-model.trim="resource.name" required="true" autofocus :invalid="submitted && !resource.name" fluid />
-          <small v-if="submitted && !resource.name" class="text-red-500">Name is required.</small>
+          <InputText id="name" v-model.trim="services.name" required="true" autofocus :invalid="submitted && !services.name" fluid />
+          <small v-if="submitted && !services.name" class="text-red-500">Name is required.</small>
         </div>
 
         <div>
           <label for="description" class="block font-bold mb-3">Description</label>
-          <Textarea id="description" v-model="resource.description" required="true" rows="3" cols="20" fluid />
+          <Textarea id="description" v-model="services.description" required="true" rows="3" cols="20" fluid />
         </div>
 
         <div>
-          <label for="resourceType" class="block font-bold mb-3">Resource type</label>
-          <Select id="resourceType" v-model="resource.typeId" :options="resourceTypes" optionLabel="label" placeholder="Select a Type" />
+          <label for="servicesType" class="block font-bold mb-3">Service category</label>
+          <Select id="servicesType" v-model="services.category" :options="services.category" optionLabel="label" placeholder="Select a Type" />
         </div>
 
         <div class="grid grid-cols-12 gap-4">
-          <div class="col-span-4">
-            <label for="cost" class="block font-bold mb-3">Cost</label>
-            <InputNumber id="cost" v-model="resource.cost" mode="currency" currency="KZT" locale="en-US" fluid />
+          <div class="col-span-6">
+            <label for="cost" class="block font-bold mb-3">Base Cost</label>
+            <InputNumber id="cost" v-model="services.baseCost" mode="currency" currency="KZT" locale="en-US" fluid />
           </div>
 
-          <div class="col-span-4">
-            <label for="price" class="block font-bold mb-3">Price</label>
-            <InputNumber id="price" v-model="resource.price" mode="currency" currency="KZT" locale="en-US" fluid />
-          </div>
-
-          <div class="col-span-4">
-            <label for="quantity" class="block font-bold mb-3">Quantity</label>
-            <InputNumber id="quantity" v-model="resource.currentQuantity" integeronly fluid />
+          <div class="col-span-6">
+            <label for="price" class="block font-bold mb-3">Man hours</label>
+            <InputNumber id="price" v-model="services.manHours" locale="en-US" fluid />
           </div>
         </div>
       </div>
