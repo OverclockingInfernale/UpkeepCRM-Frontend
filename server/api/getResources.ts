@@ -12,7 +12,6 @@ export default defineEventHandler(async (event) => {
 
     if(event.method === 'POST') {
         const resourceData = await readBody(event)
-        console.log(resourceData)
 
         const response = await useApiFetch('/api/resources', event, {
             method: event.method,

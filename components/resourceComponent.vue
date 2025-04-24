@@ -25,7 +25,6 @@ function formatCurrency(value) {
 
 onMounted(async() => {
   const {data, error} = await useFetch('/api/getResources')
-  console.log(data)
   if(data?.value){
     products.value = data.value.items;
   }
@@ -47,9 +46,13 @@ onMounted( async () => {
       console.warn('No items in response');
     }
   } catch (error) {
-    console.error('Failed to fetch resource types', error);
+    console.error('Failed to fetch resources types', error);
   }
 });
+
+async function onRowClick(event){
+
+}
 function openNew() {
   resource.value = {};
   submitted.value = false;

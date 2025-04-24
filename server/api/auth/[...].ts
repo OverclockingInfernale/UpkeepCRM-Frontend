@@ -58,7 +58,6 @@ export default NuxtAuthHandler ({
             const expiresAt = (token as any).expiresAt as number | undefined
             const refreshToken = (token as any).refreshToken as string | undefined
 
-            console.log('JWT callback triggered. Expires at:', token.expiresAt)
 
             // @ts-ignore
             const checkExpiration = expiresAt? Date.now() > token.expiresAt - 60 * 1000 : false
@@ -88,7 +87,6 @@ export default NuxtAuthHandler ({
                 } catch (e) {
                     console.error('Failed to refresh token', e)
                 }
-                console.log('Attempted token refresh')
             }
 
             return token

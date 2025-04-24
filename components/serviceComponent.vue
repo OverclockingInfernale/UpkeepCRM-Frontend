@@ -16,7 +16,7 @@ const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS }
 });
 const submitted = ref(false);
-const resourceTypes = ref([]);
+const serviceTypes = ref([]);
 
 function formatCurrency(value) {
   if (value) return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
@@ -25,7 +25,6 @@ function formatCurrency(value) {
 
 onMounted(async() => {
   const {data, error} = await useFetch('/api/getServices')
-  console.log(data)
   if(data?.value){
     products.value = data.value.items;
   }
@@ -35,12 +34,13 @@ onMounted(async() => {
   }
 });
 
+
 onMounted( async () => {
   try {
     const {data} = await useFetch('/api/getServiceCategories');
     console.log(data)
     if (data?.value.items) {
-      resourceTypes.value = data?.value.items.map(item => ({
+      serviceTypes.value = data?.value.items.map(item => ({
         label: item.name,
         text: item.description,
         value: item.id
@@ -49,7 +49,7 @@ onMounted( async () => {
       console.warn('No items in response');
     }
   } catch (error) {
-    console.error('Failed to fetch resource types', error);
+    console.error('Failed to fetch resources types', error);
   }
 });
 function openNew() {
@@ -70,11 +70,12 @@ async function saveResource() {
       const payload = {
         name: services.value.name,
         description: services.value.description,
-        category: services.value.category.value,
         baseCost: services.value.baseCost,
         manHours: services.value.manHours,
+        category: services.value.category.value,
       };
 
+      console.log(payload)
       await $fetch('/api/getServices', {
         method: services.value.id ? 'PUT' :'POST',
         body: payload
@@ -209,7 +210,7 @@ function deleteSelectedProducts() {
 
         <div>
           <label for="servicesType" class="block font-bold mb-3">Service category</label>
-          <Select id="servicesType" v-model="services.category" :options="services.category" optionLabel="label" placeholder="Select a Type" />
+          <Select id="servicesType" v-model="services.category" :options="serviceTypes" optionLabel="label" placeholder="Select a Type" />
         </div>
 
         <div class="grid grid-cols-12 gap-4">
