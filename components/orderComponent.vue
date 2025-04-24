@@ -1,20 +1,10 @@
 <script setup>
-import { ProductService } from '~/service/ProductService.vue';
+// import { ProductService } from '~/service/ProductService.vue';
 import { FilterMatchMode } from '@primevue/core/api';
 import { useToast } from 'primevue/usetoast';
 import { onMounted, ref } from 'vue';
 
-onMounted(async() => {
-  const {data, error} = await useFetch('/api/getOrders')
-  console.log(data)
-  if(data?.value){
-    products.value = data.value.items;
-  }
 
-  if (error?.value){
-    console.log('Failed to fetch orders:', error.value)
-  }
-});
 
 const toast = useToast();
 const dt = ref();
@@ -27,6 +17,25 @@ const selectedProducts = ref();
 const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS }
 });
+const loading = ref(true)
+
+onMounted(async() => {
+  loading.value = true
+  products.value = Array.from({length: 10})
+  const {data, error} = await useFetch('/api/getOrders')
+  console.log(data)
+  if(data?.value){
+    products.value = data.value.items;
+  }
+
+  if (error?.value){
+    console.log('Failed to fetch orders:', error.value)
+  }
+  setTimeout(() => {
+    loading.value = false
+  }, 1000)
+});
+
 const submitted = ref(false);
 const statuses = ref([
   { label: 'INSTOCK', value: 'instock' },
@@ -164,13 +173,48 @@ function deleteSelectedProducts() {
           </div>
         </template>
 
-        <Column field="name" header="Order Name" sortable></Column>
-        <Column field="client.name" header="Client" sortable></Column>
-        <Column field="totalCost" header="Total Cost" sortable></Column>
-        <Column field="paymentMethod.name" header="Payment" sortable></Column>
-        <Column field="status.name" header="Status" sortable></Column>
-        <Column field="deadlineDate" header="Deadline" sortable></Column>
-        <Column field="assignedEmployee.name" header="Assigned To" sortable></Column>
+        <Column field="name" header="Order Name" sortable>
+          <template #body="{data}">
+            <Skeleton v-if="loading" width="3rem" />
+            <span v-else>{{data.name}}</span>
+          </template>
+        </Column>
+        <Column field="client.name" header="Client" sortable>
+          <template #body="{data}">
+            <Skeleton v-if="loading" width="3rem" />
+            <span v-else>{{data.client.name}}</span>
+          </template>
+        </Column>
+        <Column field="totalCost" header="Total Cost" sortable>
+          <template #body="{data}">
+            <Skeleton v-if="loading" width="2rem" />
+            <span v-else>{{data.totalCost}}</span>
+          </template>
+        </Column>
+        <Column field="paymentMethod.name" header="Payment" sortable>
+          <template #body="{data}">
+            <Skeleton v-if="loading" width="2rem" />
+            <span v-else>{{data.paymentMethod.name}}</span>
+          </template>
+        </Column>
+        <Column field="status.name" header="Status" sortable>
+          <template #body="{data}">
+            <Skeleton v-if="loading" width="6rem" />
+            <span v-else>{{data.status.name}}</span>
+          </template>
+        </Column>
+        <Column field="deadlineDate" header="Deadline" sortable>
+          <template #body="{data}">
+            <Skeleton v-if="loading" width="6rem" />
+            <span v-else>{{data.deadlineDate}}</span>
+          </template>
+        </Column>
+        <Column field="assignedEmployee.name" header="Assigned To" sortable>
+          <template #body="{data}">
+            <Skeleton v-if="loading" width="6rem" />
+            <span v-else>{{data.assignedEmployee.name}}</span>
+          </template>
+        </Column>
 
       </DataTable>
     </div>

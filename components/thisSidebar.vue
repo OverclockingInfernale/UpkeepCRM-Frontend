@@ -30,7 +30,10 @@ const items = ref([
   },
   {
     label: "Schedule",
-    icon: PrimeIcons.CALENDAR
+    icon: PrimeIcons.CALENDAR,
+    command: () => {
+      router.push('/schedule')
+    }
   },
   {
     label: "Services",

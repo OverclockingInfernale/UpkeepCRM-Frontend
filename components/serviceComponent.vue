@@ -17,6 +17,7 @@ const filters = ref({
 });
 const submitted = ref(false);
 const serviceTypes = ref([]);
+const loading = ref(true)
 
 function formatCurrency(value) {
   if (value) return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
@@ -24,6 +25,8 @@ function formatCurrency(value) {
 }
 
 onMounted(async() => {
+  loading.value = true
+  products.value = Array.from({length: 10})
   const {data, error} = await useFetch('/api/getServices')
   if(data?.value){
     products.value = data.value.items;
@@ -32,6 +35,9 @@ onMounted(async() => {
   if (error?.value){
     console.log('Failed to fetch orders:', error.value)
   }
+  setTimeout(() => {
+    loading.value = false
+  }, 1000)
 });
 
 
@@ -182,11 +188,36 @@ function deleteSelectedProducts() {
           </div>
         </template>
 
-        <Column field="name" header="Name" sortable></Column>
-        <Column field="description" header="Description" sortable></Column>
-        <Column field="baseCost" header="Base Cost" sortable></Column>
-        <Column field="manHours" header="Man hours" sortable></Column>
-        <Column field="category.name" header="Category" sortable></Column>
+        <Column field="name" header="Name" sortable>
+          <template #body="{data}">
+            <Skeleton v-if="loading" width="6rem" />
+            <span v-else>{{data.name}}</span>
+          </template>
+        </Column>
+        <Column field="description" header="Description" sortable>>
+          <template #body="{data}">
+            <Skeleton v-if="loading" width="6rem" />
+            <span v-else>{{data.description}}</span>
+          </template>
+        </Column>
+        <Column field="baseCost" header="Base Cost" sortable>>
+          <template #body="{data}">
+            <Skeleton v-if="loading" width="6rem" />
+            <span v-else>{{data.baseCost}}</span>
+          </template>
+        </Column>
+        <Column field="manHours" header="Man hours" sortable>>
+          <template #body="{data}">
+            <Skeleton v-if="loading" width="6rem" />
+            <span v-else>{{data.manHours}}</span>
+          </template>
+        </Column>
+        <Column field="category.name" header="Category" sortable>>
+          <template #body="{data}">
+            <Skeleton v-if="loading" width="6rem" />
+            <span v-else>{{data.category.name}}</span>
+          </template>
+        </Column>
 
 
 

@@ -12,6 +12,7 @@ const deleteProductDialog = ref(false);
 const deleteProductsDialog = ref(false);
 const resource = ref({});
 const selectedProducts = ref();
+const loading = ref(true)
 const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS }
 });
@@ -24,6 +25,8 @@ function formatCurrency(value) {
 }
 
 onMounted(async() => {
+  loading.value = true;
+  products.value = Array.from({length: 10})
   const {data, error} = await useFetch('/api/getResources')
   if(data?.value){
     products.value = data.value.items;
@@ -32,6 +35,10 @@ onMounted(async() => {
   if (error?.value){
     console.log('Failed to fetch orders:', error.value)
   }
+
+  setTimeout(() => {
+    loading.value = false
+  }, 1000)
 });
 
 onMounted( async () => {
@@ -170,8 +177,8 @@ function deleteSelectedProducts() {
           :filters="filters"
           paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
           :rowsPerPageOptions="[5, 10, 25]"
-          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} resources"
-      >
+          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} resources">
+
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
             <h4 class="m-0">Manage Resources</h4>
@@ -184,13 +191,48 @@ function deleteSelectedProducts() {
           </div>
         </template>
 
-        <Column field="name" header="Name" sortable></Column>
-        <Column field="description" header="Description" sortable></Column>
-        <Column field="cost" header="Cost" sortable></Column>
-        <Column field="price" header="Price" sortable></Column>
-        <Column field="currentQuantity" header="Quantity" sortable></Column>
-        <Column field="type.name" header="Type" sortable></Column>
-        <Column field="unit" header="Unit" sortable></Column>
+        <Column field="name" header="Name" sortable>
+          <template #body="{data}">
+            <Skeleton v-if="loading" width="8rem" />
+            <span v-else>{{data.name}}</span>
+          </template>
+        </Column>
+        <Column field="description" header="Description" sortable>
+          <template #body="{data}">
+            <Skeleton v-if="loading" width="8rem" />
+            <span v-else>{{data.description}}</span>
+          </template>
+        </Column>
+        <Column field="cost" header="Cost" sortable>
+          <template #body="{data}">
+            <Skeleton v-if="loading" width="2rem" />
+            <span v-else>{{data.cost}}</span>
+          </template>
+        </Column>
+        <Column field="price" header="Price" sortable>
+          <template #body="{data}">
+            <Skeleton v-if="loading" width="2rem" />
+            <span v-else>{{data.price}}</span>
+          </template>
+        </Column>
+        <Column field="currentQuantity" header="Quantity" sortable>
+          <template #body="{data}">
+            <Skeleton v-if="loading" width="2rem" />
+            <span v-else>{{data.currentQuantity}}</span>
+          </template>
+        </Column>
+        <Column field="type.name" header="Type" sortable>
+          <template #body="{data}">
+            <Skeleton v-if="loading" width="6rem" />
+            <span v-else>{{data.type.name}}</span>
+          </template>
+        </Column>
+        <Column field="unit" header="Unit" sortable>
+          <template #body="{data}">
+            <Skeleton v-if="loading" width="2rem" />
+            <span v-else>{{data.unit}}</span>
+          </template>
+        </Column>
 
 
       </DataTable>
