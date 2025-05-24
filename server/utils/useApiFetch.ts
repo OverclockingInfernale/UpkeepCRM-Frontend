@@ -19,7 +19,6 @@ export const useApiFetch = async<T = unknown>(url: string, event: H3Event, optio
             query: options.params,
             body: options.body
         }) as T
-
         return response
     } catch (err: any) {
         console.error('useFetchApi error:', err?.data || err)

@@ -5,7 +5,11 @@ export default defineEventHandler(async (event) => {
 
     if(event.method === 'GET'){
         return await useApiFetch('/api/resources', event, {
-            method: 'GET'
+            method: 'GET',
+            params: {
+                page: 1,
+                limit: 50
+            }
         })
     }
 

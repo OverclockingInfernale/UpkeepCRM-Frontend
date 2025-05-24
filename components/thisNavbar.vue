@@ -29,13 +29,13 @@ function handleLogout() {
           <i :class="['pi', { 'pi-moon': isDarkTheme, 'pi-sun': !isDarkTheme }]"></i>
         </button>
         <div class="relative">
-          <button
-              v-styleclass="{ selector: '@next', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: true }"
-              type="button"
-              class="layout-topbar-action layout-topbar-action-highlight"
-          >
-            <i class="pi pi-palette"></i>
-          </button>
+<!--          <button-->
+<!--              v-styleclass="{ selector: '@next', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: true }"-->
+<!--              type="button"-->
+<!--              class="layout-topbar-action layout-topbar-action-highlight"-->
+<!--          >-->
+<!--            <i class="pi pi-palette"></i>-->
+<!--          </button>-->
           <AppConfigurator />
         </div>
       </div>
@@ -50,15 +50,12 @@ function handleLogout() {
       <div class="layout-topbar-menu hidden lg:block">
         <div class="layout-topbar-menu-content">
           <button type="button" class="layout-topbar-action">
-            <i class="pi pi-calendar"></i>
-            <span>Calendar</span>
-          </button>
-          <button type="button" class="layout-topbar-action">
             <i class="pi pi-user"></i>
             <span>Profile</span>
           </button>
           <button @click="handleLogout" type="button" class="layout-topbar-action">
             <i class="pi pi-sign-out"></i>
+            <span>Log out</span>
           </button>
         </div>
       </div>

@@ -215,22 +215,23 @@ function deleteSelectedProducts() {
             <span v-else>{{data.price}}</span>
           </template>
         </Column>
+        <Column field="type.name" header="Type" sortable>
+        <template #body="{data}">
+          <Skeleton v-if="loading" width="6rem" />
+          <span v-else>{{data.type.name}}</span>
+        </template>
+      </Column>
         <Column field="currentQuantity" header="Quantity" sortable>
           <template #body="{data}">
             <Skeleton v-if="loading" width="2rem" />
             <span v-else>{{data.currentQuantity}}</span>
           </template>
         </Column>
-        <Column field="type.name" header="Type" sortable>
-          <template #body="{data}">
-            <Skeleton v-if="loading" width="6rem" />
-            <span v-else>{{data.type.name}}</span>
-          </template>
-        </Column>
+
         <Column field="unit" header="Unit" sortable>
           <template #body="{data}">
             <Skeleton v-if="loading" width="2rem" />
-            <span v-else>{{data.unit}}</span>
+            <span v-else>{{data.unit.name}}</span>
           </template>
         </Column>
 

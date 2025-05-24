@@ -4,42 +4,9 @@ import { FilterMatchMode } from '@primevue/core/api';
 import { useToast } from 'primevue/usetoast';
 import { onMounted, ref } from 'vue';
 
-const toast = useToast();
-const dt = ref();
-const products = ref();
-const serviceDialog = ref(false);
-const deleteProductDialog = ref(false);
-const deleteProductsDialog = ref(false);
-const services = ref({});
-const selectedProducts = ref();
-const filters = ref({
-  global: { value: null, matchMode: FilterMatchMode.CONTAINS }
+onMounted(() => {
+  fetchData()
 });
-const submitted = ref(false);
-const serviceTypes = ref([]);
-const loading = ref(true)
-
-function formatCurrency(value) {
-  if (value) return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-  return;
-}
-
-onMounted(async() => {
-  loading.value = true
-  products.value = Array.from({length: 10})
-  const {data, error} = await useFetch('/api/getServices')
-  if(data?.value){
-    products.value = data.value.items;
-  }
-
-  if (error?.value){
-    console.log('Failed to fetch orders:', error.value)
-  }
-  setTimeout(() => {
-    loading.value = false
-  }, 1000)
-});
-
 
 onMounted( async () => {
   try {
@@ -58,7 +25,43 @@ onMounted( async () => {
     console.error('Failed to fetch resources types', error);
   }
 });
+
+const toast = useToast();
+const dt = ref();
+const products = ref();
+const serviceDialog = ref(false);
+const deleteProductDialog = ref(false);
+const deleteProductsDialog = ref(false);
+const services = ref({});
+const selectedProducts = ref();
+const isEditMode = ref(false)
+const dialogItem = ref({})
+const filters = ref({
+  global: { value: null, matchMode: FilterMatchMode.CONTAINS }
+});
+const submitted = ref(false);
+const serviceTypes = ref([]);
+const loading = ref(true)
+
+const fetchData = async() => {
+  loading.value = true
+  products.value = Array.from({length: 10})
+  const {data, error} = await useFetch('/api/getServices')
+  if(data?.value){
+    products.value = data.value.items;
+  }
+
+  if (error?.value){
+    console.log('Failed to fetch orders:', error.value)
+  }
+  console.log(data)
+  setTimeout(() => {
+    loading.value = false
+  }, 1000)
+}
+
 function openNew() {
+  isEditMode.value = false
   services.value = {};
   submitted.value = false;
   serviceDialog.value = true;
@@ -71,17 +74,25 @@ function hideDialog() {
 
 async function saveResource() {
   submitted.value = true;
+  console.log(services.value)
   if (services?.value.name?.trim()) {
     try {
       const payload = {
         name: services.value.name,
         description: services.value.description,
-        baseCost: services.value.baseCost,
-        manHours: services.value.manHours,
-        category: services.value.category.value,
+        basePrice: services.value.basePrice,
+        ...(services.value.id                             //conditional spread syntax for differentiating post and put
+            ? {
+              id: services.value.id,
+              manHours: services.value.manHours,
+              categoryId: services.value.category.value
+            }
+            : {
+              humanHours: services.value.manHours,
+              category: services.value.category.value
+            })
       };
 
-      console.log(payload)
       await $fetch('/api/getServices', {
         method: services.value.id ? 'PUT' :'POST',
         body: payload
@@ -92,12 +103,20 @@ async function saveResource() {
     }
 
     serviceDialog.value = false
+    await fetchData()
+    products.value = [...services]
     services.value = {}
   }
 }
+const onRowClick = (event) => {
+  isEditMode.value = true
+  serviceDialog.value = true
+  editService(event.data)
+}
 
-function editProduct(prod) {
-  services.value = { ...prod };
+function editService(item) {
+  services.value = { ...item };
+  // services.value.category = serviceTypes.value.find(t => t.id === services.value.category.id)
   serviceDialog.value = true;
 }
 
@@ -123,15 +142,6 @@ function findIndexById(id) {
   }
 
   return index;
-}
-
-function createId() {
-  let id = '';
-  var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for (var i = 0; i < 5; i++) {
-    id += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return id;
 }
 
 function exportCSV() {
@@ -166,7 +176,7 @@ function deleteSelectedProducts() {
 
       <DataTable
           ref="dt"
-          v-model:selection="selectedProducts"
+
           :value="products"
           dataKey="id"
           :paginator="true"
@@ -175,6 +185,7 @@ function deleteSelectedProducts() {
           paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
           :rowsPerPageOptions="[5, 10, 25]"
           currentPageReportTemplate="Showing {first} to {last} of {totalRecords} services"
+          @row-click="onRowClick"
       >
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
@@ -190,32 +201,32 @@ function deleteSelectedProducts() {
 
         <Column field="name" header="Name" sortable>
           <template #body="{data}">
-            <Skeleton v-if="loading" width="6rem" />
-            <span v-else>{{data.name}}</span>
+            <Skeleton v-if="loading" width="12rem" />
+            <span v-else>{{data?.name}}</span>
           </template>
         </Column>
         <Column field="description" header="Description" sortable>>
           <template #body="{data}">
-            <Skeleton v-if="loading" width="6rem" />
-            <span v-else>{{data.description}}</span>
+            <Skeleton v-if="loading" width="18rem" />
+            <span v-else>{{data?.description}}</span>
           </template>
         </Column>
         <Column field="baseCost" header="Base Cost" sortable>>
           <template #body="{data}">
             <Skeleton v-if="loading" width="6rem" />
-            <span v-else>{{data.baseCost}}</span>
+            <span v-else>{{data?.basePrice}}</span>
           </template>
         </Column>
         <Column field="manHours" header="Man hours" sortable>>
           <template #body="{data}">
             <Skeleton v-if="loading" width="6rem" />
-            <span v-else>{{data.manHours}}</span>
+            <span v-else>{{data?.humanHours}}</span>
           </template>
         </Column>
         <Column field="category.name" header="Category" sortable>>
           <template #body="{data}">
-            <Skeleton v-if="loading" width="6rem" />
-            <span v-else>{{data.category.name}}</span>
+            <Skeleton v-if="loading" width="12rem" />
+            <span v-else>{{data?.category.name}}</span>
           </template>
         </Column>
 
@@ -224,7 +235,7 @@ function deleteSelectedProducts() {
       </DataTable>
     </div>
 
-    <Dialog v-model:visible="serviceDialog" :style="{ width: '450px' }" header="Services details" :modal="true">
+    <Dialog v-model:visible="serviceDialog" :style="{ width: '450px' }" :header="isEditMode ? 'Edit Service' : 'Create Service'" :modal="true">
       <div class="flex flex-col gap-6">
         <img v-if="services.image" :src="`https://primefaces.org/cdn/primevue/images/product/${services.image}`" :alt="services.image" class="block m-auto pb-4" />
 
@@ -241,18 +252,18 @@ function deleteSelectedProducts() {
 
         <div>
           <label for="servicesType" class="block font-bold mb-3">Service category</label>
-          <Select id="servicesType" v-model="services.category" :options="serviceTypes" optionLabel="label" placeholder="Select a Type" />
+          <Select v-model="services.category" :options="serviceTypes" optionLabel="label" placeholder="Select a Type" />
         </div>
 
         <div class="grid grid-cols-12 gap-4">
           <div class="col-span-6">
             <label for="cost" class="block font-bold mb-3">Base Cost</label>
-            <InputNumber id="cost" v-model="services.baseCost" mode="currency" currency="KZT" locale="en-US" fluid />
+            <InputNumber id="cost" v-model="services.basePrice"  locale="en-US" fluid />
           </div>
 
           <div class="col-span-6">
             <label for="price" class="block font-bold mb-3">Man hours</label>
-            <InputNumber id="price" v-model="services.manHours" locale="en-US" fluid />
+            <InputNumber id="price" type="number" v-model="services.manHours" locale="en-US" fluid  />
           </div>
         </div>
       </div>

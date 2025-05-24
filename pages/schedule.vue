@@ -15,7 +15,7 @@ export default {
         nowIndicator: true,
         editable: true,
         initialEvents: [
-          { title: 'nice event', start: new Date() }
+          { title: 'Pre-defense', start: new Date() }
         ]
       }
     }
