@@ -17,7 +17,7 @@ onMounted( async () => {
         label: item.name,
         text: item.description,
         value: item.id
-      }));
+      })) || [];
     } else {
       console.warn('No items in response');
     }
@@ -54,10 +54,9 @@ const fetchData = async() => {
   if (error?.value){
     console.log('Failed to fetch orders:', error.value)
   }
-  console.log(data)
   setTimeout(() => {
     loading.value = false
-  }, 1000)
+  }, 250)
 }
 
 function openNew() {
@@ -84,11 +83,11 @@ async function saveResource() {
         ...(services.value.id                             //conditional spread syntax for differentiating post and put
             ? {
               id: services.value.id,
-              manHours: services.value.manHours,
+              manHours: services.value.humanHours,
               categoryId: services.value.category.value
             }
             : {
-              humanHours: services.value.manHours,
+              humanHours: services.value.humanHours,
               category: services.value.category.value
             })
       };
@@ -186,6 +185,7 @@ function deleteSelectedProducts() {
           :rowsPerPageOptions="[5, 10, 25]"
           currentPageReportTemplate="Showing {first} to {last} of {totalRecords} services"
           @row-click="onRowClick"
+          :row-class="() => 'hover:bg-blue-50 cursor-pointer'"
       >
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
@@ -226,11 +226,10 @@ function deleteSelectedProducts() {
         <Column field="category.name" header="Category" sortable>>
           <template #body="{data}">
             <Skeleton v-if="loading" width="12rem" />
-            <span v-else>{{data?.category.name}}</span>
+            <span v-else>{{data?.category?.name || '-'}}</span>
+<!--            this category check keep site from exploding-->
           </template>
         </Column>
-
-
 
       </DataTable>
     </div>
@@ -252,18 +251,19 @@ function deleteSelectedProducts() {
 
         <div>
           <label for="servicesType" class="block font-bold mb-3">Service category</label>
-          <Select v-model="services.category" :options="serviceTypes" optionLabel="label" placeholder="Select a Type" />
+          <Select v-model="services.category" :options="serviceTypes" optionLabel="label" required placeholder="Select a Type" />
         </div>
 
         <div class="grid grid-cols-12 gap-4">
           <div class="col-span-6">
             <label for="cost" class="block font-bold mb-3">Base Cost</label>
-            <InputNumber id="cost" v-model="services.basePrice"  locale="en-US" fluid />
+            <InputNumber id="cost" v-model="services.basePrice" required  locale="en-US" fluid />
           </div>
 
           <div class="col-span-6">
             <label for="price" class="block font-bold mb-3">Man hours</label>
-            <InputNumber id="price" type="number" v-model="services.manHours" locale="en-US" fluid  />
+            <InputNumber id="price" type="number" v-model.number="services.humanHours" required="true" autofocus :invalid="submitted && services.humanHours === null" locale="en-US" fluid  />
+            <small v-if="submitted && services.humanHours === null" class="text-red-500">Hours are required.</small>
           </div>
         </div>
       </div>
@@ -273,7 +273,6 @@ function deleteSelectedProducts() {
         <Button label="Save" icon="pi pi-check" @click="saveResource" />
       </template>
     </Dialog>
-
 
     <Dialog v-model:visible="deleteProductDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
       <div class="flex items-center gap-4">
