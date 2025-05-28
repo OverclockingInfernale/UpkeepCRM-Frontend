@@ -59,7 +59,7 @@ const fetchData = async() => {
   }, 250)
 }
 
-function openNew() {
+function openNew() {        //Opens dialog for creation
   isEditMode.value = false
   services.value = {};
   submitted.value = false;
@@ -73,7 +73,6 @@ function hideDialog() {
 
 async function saveResource() {
   submitted.value = true;
-  console.log(services.value)
   if (services?.value.name?.trim()) {
     try {
       const payload = {
@@ -107,7 +106,7 @@ async function saveResource() {
     services.value = {}
   }
 }
-const onRowClick = (event) => {
+const onRowClick = (event) => {    //opens dialog for edit
   isEditMode.value = true
   serviceDialog.value = true
   editService(event.data)
@@ -115,7 +114,6 @@ const onRowClick = (event) => {
 
 function editService(item) {
   services.value = { ...item };
-  // services.value.category = serviceTypes.value.find(t => t.id === services.value.category.id)
   serviceDialog.value = true;
 }
 
