@@ -11,7 +11,6 @@ onMounted(() => {
 onMounted( async () => {
   try {
     const {data} = await useFetch('/api/getServiceCategories');
-    console.log(data)
     if (data?.value.items) {
       serviceTypes.value = data?.value.items.map(item => ({
         label: item.name,

@@ -1,8 +1,12 @@
-
 services:
   nuxt-app:
-    image: nuxt-app
+    image: my-nuxt-app
     ports:
       - "3000:3000"
-    env_file:
-      - .env
+    environment:
+      AUTH_BASE_URL: ${AUTH_BASE_URL}
+      API_URL: ${API_URL}
+      API_URL_TOKEN: ${API_URL_TOKEN}
+      HOST: ${HOST}
+      PORT: ${PORT}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}

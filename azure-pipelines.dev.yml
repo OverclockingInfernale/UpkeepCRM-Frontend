@@ -1,0 +1,31 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  name: main
+
+stages:
+- stage: BuildAndDeploy
+  jobs:
+  - job: RunCompose
+    steps:
+    - checkout: self
+
+    - task: DockerInstaller@0
+      inputs:
+        dockerVersion: '28.0.4'
+
+    - script: |
+        docker compose -p nuxt-frontend down
+        docker compose -p nuxt-frontend up -d --build
+      env:
+        AUTH_BASE_URL: $(AUTH_BASE_URL)
+        API_URL: $(API_URL)
+        API_URL_TOKEN: $(API_URL_TOKEN)
+        HOST: $(HOST)
+        PORT: $(PORT)
+        NEXTAUTH_SECRET: $(NEXTAUTH_SECRET)
+
+      displayName: 'Build and run frontend docker container'

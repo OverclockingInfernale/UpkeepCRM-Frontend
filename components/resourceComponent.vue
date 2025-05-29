@@ -21,7 +21,7 @@ const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS }
 });
 const submitted = ref(false);
-const resourceTypes = ref({});
+const resourceTypes = ref([]);
 const measurementUnitTypes = ref([]);
 const isEditMode = ref(false)
 
@@ -45,7 +45,10 @@ const fetchData = async() => {
   try {
     const {data} = await useFetch('/api/getResourceTypes');
     if (data?.value.items) {
-      resourceTypes.value = data?.value
+      resourceTypes.value = data?.value.items.map(item => ({
+        label: item.name,
+        value: item.id
+      }))
     } else {
       console.warn('No items in response');
     }
@@ -290,7 +293,7 @@ function deleteSelectedProducts() {
 
           <div class="col-span-8">
             <label for="resourceType" class="block font-bold mb-3">Resource type</label>
-            <Select id="resourceType" v-model="resourceTypes.name" :options="resourceTypes" optionLabel="label" placeholder="Select a Type" />
+            <Select id="resourceType" v-model="resource.typeId" :options="resourceTypes" optionLabel="label" placeholder="Select a Type" />
           </div>
 
 
