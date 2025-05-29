@@ -7,15 +7,18 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "start": "nuxt start"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.17",
+    "@primevue/nuxt-module": "^4.3.4",
     "@fullcalendar/interaction": "^6.1.17",
     "@fullcalendar/timegrid": "^6.1.17",
     "@fullcalendar/vue3": "^6.1.17",
     "@primevue/forms": "^4.3.4",
     "@primevue/themes": "^4.2.5",
+    "@sidebase/nuxt-auth": "^0.10.1",
     "@tailwindcss/vite": "^4.1.4",
     "nuxt": "^3.15.4",
     "primeicons": "^7.0.0",
@@ -25,8 +28,6 @@
     "vue-router": "latest"
   },
   "devDependencies": {
-    "@primevue/nuxt-module": "^4.2.5",
-    "@sidebase/nuxt-auth": "^0.10.1",
     "@types/node": "^22.14.0",
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.3",
