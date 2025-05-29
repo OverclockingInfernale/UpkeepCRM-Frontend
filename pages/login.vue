@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import TopbarWidget from '@/components/landing/TopbarWidget.vue';
-import FeaturesWidget from '@/components/landing/FeaturesWidget.vue';
-import FooterWidget from '@/components/landing/FooterWidget.vue';
 import HeroWidget from '@/components/landing/HeroWidget.vue';
-import HighlightsWidget from '@/components/landing/HighlightsWidget.vue';
-import PricingWidget from '@/components/landing/PricingWidget.vue';
 
   definePageMeta({
     layout: false,
