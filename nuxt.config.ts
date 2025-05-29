@@ -2,6 +2,10 @@
 import Aura from '@primevue/themes/aura';
 import tailwindcss from '@tailwindcss/vite';
 export default defineNuxtConfig({
+  nitro: {
+    preset: 'node-server'
+  },
+
   modules: [
     '@sidebase/nuxt-auth',
     '@primevue/nuxt-module'
