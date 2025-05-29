@@ -26,7 +26,7 @@ export default defineNuxtConfig({
 
   auth: {
     globalAppMiddleware: true,
-    baseURL: 'http://localhost:3000/api/auth'
+    baseURL: 'http://sandbox.tailaf6362.ts.net:3000/api/auth'
   },
 
 
