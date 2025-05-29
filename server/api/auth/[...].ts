@@ -1,7 +1,7 @@
 import {NuxtAuthHandler} from "#auth";
-import {btoa, Buffer} from "buffer";
 
 export default NuxtAuthHandler ({
+    secret: process.env.NEXTAUTH_SECRET,
     providers: [
             {
                 id: 'keycloak',

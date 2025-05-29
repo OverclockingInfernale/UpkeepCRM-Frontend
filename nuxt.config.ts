@@ -21,7 +21,7 @@ export default defineNuxtConfig({
 
   auth: {
     globalAppMiddleware: true,
-
+    baseURL: 'http://localhost:3000/api/auth'
   },
 
 
