@@ -17,6 +17,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     api_url: process.env.API_URL || '',
     api_url_token: process.env.API_URL_TOKEN || '',
+    nextauth_secret: process.env.NEXTAUTH_SECRET,
 
     public: {
       host_url: process.env.HOST || ''

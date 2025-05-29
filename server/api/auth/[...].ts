@@ -1,7 +1,7 @@
 import {NuxtAuthHandler} from "#auth";
 
 export default NuxtAuthHandler ({
-    secret: process.env.NEXTAUTH_SECRET,
+    secret: useRuntimeConfig().nextauth_secret,
     providers: [
             {
                 id: 'keycloak',
