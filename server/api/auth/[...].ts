@@ -1,7 +1,7 @@
 import {NuxtAuthHandler} from "#auth";
 
 export default NuxtAuthHandler ({
-    secret: useRuntimeConfig().nextauth_secret,
+    secret: 'alisa',
     providers: [
             {
                 id: 'keycloak',
