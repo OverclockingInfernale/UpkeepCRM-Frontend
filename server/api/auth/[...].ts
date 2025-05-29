@@ -25,7 +25,7 @@ export default NuxtAuthHandler ({
                     url: 'http://sandbox.tailaf6362.ts.net:49153/realms/dev/protocol/openid-connect/token',
                     params: {
                         grant_type: 'authorization_code',
-                        redirect_uri: 'http://localhost:3000/api/auth/callback/keycloak'
+                        redirect_uri: 'http://sandbox.tailaf6362.ts.net:3000/api/auth/callback/keycloak'
                     }
                 },
 
