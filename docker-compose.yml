@@ -7,9 +7,9 @@ services:
     ports:
       - "3000:3000"
     environment:
-      AUTH_BASE_URL: ${AUTH_BASE_URL}
-      API_URL: ${API_URL}
-      API_URL_TOKEN: ${API_URL_TOKEN}
-      HOST: 0.0.0.0
-      PORT: 3000
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      - AUTH_BASE_URL
+      - API_URL
+      - API_URL_TOKEN
+      - HOST
+      - PORT
+      - NEXTAUTH_SECRET
