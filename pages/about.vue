@@ -6,6 +6,7 @@ import Schedule from "~/components/dashboard/scheduleWidget.vue";
 import Chats from "~/components/dashboard/chats.vue";
 import OrderCard from "~/components/dashboard/orderCard.vue";
 import ResourceWidget from "~/components/dashboard/resourceWidget.vue";
+import TelegramWidget from "~/components/dashboard/telegramWidget.vue";
 
 console.log()
 
@@ -21,7 +22,7 @@ console.log()
         <schedule/>
       </div>
       <div class="col-span-12 xl:col-span-6">
-<!--        <resource-widget/>-->
+        <TelegramWidget/>
         <chats/>
       </div>
     </div>
