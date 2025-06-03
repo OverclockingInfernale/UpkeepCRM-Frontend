@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: my-nuxt-app
+    #image: my-nuxt-app
     ports:
       - "3000:3000"
     environment:

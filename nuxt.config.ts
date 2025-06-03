@@ -15,12 +15,12 @@ export default defineNuxtConfig({
   devtools: {enabled: true},
 
   runtimeConfig: {
-    api_url: process.env.API_URL || '',
     api_url_token: process.env.API_URL_TOKEN || '',
     nextauth_secret: process.env.NEXTAUTH_SECRET,
 
     public: {
-      host_url: process.env.HOST || ''
+      host_url: process.env.HOST || '',
+      api_url: process.env.API_URL || '',
     }
   },
 

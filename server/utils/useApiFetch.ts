@@ -10,7 +10,7 @@ export const useApiFetch = async<T = unknown>(url: string, event: H3Event, optio
     const token = await $fetch<string>('/api/token', {headers})
 
     try {
-        const response = await $fetch(`${config.api_url}${url}`, {
+        const response = await $fetch(`${config.public.api_url}${url}`, {
             method: options.method || 'GET',
             headers: {
                 // @ts-ignore
