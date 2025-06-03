@@ -48,8 +48,15 @@ const items = ref([
     icon: PrimeIcons.BOX,
     command: () => {
       router.push('/resources')
-    }
+    },
   },
+  {
+    label: "ChatBot",
+    icon: PrimeIcons.TELEGRAM,
+    command: () => {
+      router.push('/chatbot')
+    }
+  }
 
 ]);
 </script>

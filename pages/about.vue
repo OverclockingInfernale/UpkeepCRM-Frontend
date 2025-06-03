@@ -22,7 +22,6 @@ console.log()
         <schedule/>
       </div>
       <div class="col-span-12 xl:col-span-6">
-        <TelegramWidget/>
         <chats/>
       </div>
     </div>

@@ -1,6 +1,5 @@
-
-
 <template>
+<!--  this component doesnt work-->
   <div class="telegram-container">
     <iframe
         class="telegram-iframe"
