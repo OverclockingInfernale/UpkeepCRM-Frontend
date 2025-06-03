@@ -4,8 +4,6 @@ import { FilterMatchMode } from '@primevue/core/api';
 import { useToast } from 'primevue/usetoast';
 import { onMounted, ref } from 'vue';
 
-
-
 const toast = useToast();
 const dt = ref();
 const products = ref();

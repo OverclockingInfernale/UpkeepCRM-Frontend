@@ -8,7 +8,7 @@ export const useApiFetch = async<T = unknown>(url: string, event: H3Event, optio
     const config = useRuntimeConfig()
     const headers = getRequestHeaders(event) as HeadersInit
     const token = await $fetch<string>('/api/token', {headers})
-    console.log(config.public.api_url)
+    console.log('BACKEND URL', config.public.api_url)
     try {
         const response = await $fetch(`${config.public.api_url}${url}`, {
             method: options.method || 'GET',
