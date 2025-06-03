@@ -22,7 +22,7 @@ stages:
         docker compose -p nuxt-frontend up -d --build
       env:
         AUTH_BASE_URL: $(AUTH_BASE_URL)
-        API_URL: $(API_URL)
+        NUXT_PUBLIC_API_URL: $(API_URL)
         API_URL_TOKEN: $(API_URL_TOKEN)
         HOST: $(HOST)
         PORT: $(PORT)
