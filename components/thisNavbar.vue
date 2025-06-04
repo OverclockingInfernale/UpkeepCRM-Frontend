@@ -11,7 +11,7 @@ function handleLogout() {
     redirect: false
   })
 
-  window.location.href = `http://sandbox.tailaf6362.ts.net:49153/realms/dev/protocol/openid-connect/logout?redirect_uri=${encodeURIComponent(config.public.host_url)}`
+  window.location.href = `http://sandbox.tailaf6362.ts.net:49153/realms/dev/protocol/openid-connect/logout`
 }
 
 </script>
