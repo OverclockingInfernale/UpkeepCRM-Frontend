@@ -39,32 +39,44 @@ const fetchData = async() => {
       products.value = data.value.items;
     }
   } catch(error) {
+      toast.add({
+        severity: "error",
+        summary: "server error",
+        detail: "Failed to fetch resources",
+        life: 3000
+      })
       console.log('Failed to fetch resources:', error)
   }
 
   try {
     const {data} = await useFetch('/api/getResourceTypes');
     if (data?.value.items) {
-      resourceTypes.value = data?.value.items.map(item => ({
-        label: item.name,
-        value: item.id
-      }))
+      resourceTypes.value = data?.value.items
     } else {
       console.warn('No items in response');
     }
   } catch (error) {
+    toast.add({
+      severity: "error",
+      summary: "server error",
+      detail: "Failed to fetch resource types",
+      life: 3000
+    })
     console.error('Failed to fetch resource types', error);
   }
 
   try{
     const {data} = await useFetch('/api/getMeasurementUnits');
     if(data?.value) {
-      measurementUnitTypes.value = data?.value.items.map(item => ({
-        label: item.name,
-        value: item.id
-      }))
+      measurementUnitTypes.value = data?.value.items
     }
   } catch (error) {
+    toast.add({
+      severity: "error",
+      summary: "server error",
+      detail: "Failed to fetch measurement types",
+      life: 3000
+    })
     console.error('Failed to fetch measurement unit types', error)
   }
 
@@ -93,11 +105,11 @@ async function saveResource() {
         ...(resource.value.id && {id: resource.value.id}),    //Conditional spread operator to define inclusion of id and preparing payload for put request
         name: resource.value.name,
         description: resource.value.description,
-        typeId: resource.value.typeId.value,
+        typeId: resource.value.type?.id,
         price: resource.value.price,
         cost: resource.value.cost,
         currentQuantity: resource.value.currentQuantity,
-        unitId: resource.value.unitId.value
+        unitId: resource.value.unit?.id
       };
 
       await $fetch('/api/getResources', {
@@ -105,7 +117,26 @@ async function saveResource() {
         body: payload
       })
 
+      toast.add({
+        severity: "success",
+        ...(resource.value.id ? {
+              summary: "Updated",
+              detail: "Resource successfully updated"
+            }
+            : {
+              summary: "Created",
+              detail: "Resource successfully created"
+            }),
+        life: 3000
+      })
+
     } catch (error){
+      toast.add({
+        severity: "error",
+        summary: "server error",
+        detail: "Resource creation/update failed",
+        life: 3000
+      })
       console.error('Resource creation failed', error)
     }
 
@@ -124,6 +155,7 @@ const onRowClick = (event) => {
 
 function editResource(item) {
   resource.value = { ...item };
+  console.log('resource object comparison', ' and ', resource.value.type.id)
   // services.value.category = serviceTypes.value.find(t => t.id === services.value.category.id)
   resourceDialog.value = true;
 }
@@ -188,7 +220,6 @@ function deleteSelectedProducts() {
       <Toolbar class="mb-6">
         <template #start>
           <Button label="New" icon="pi pi-plus" severity="secondary" class="mr-2" @click="openNew" />
-          <Button label="Delete" icon="pi pi-trash" severity="secondary" @click="confirmDeleteSelected" :disabled="!selectedProducts || !selectedProducts.length" />
         </template>
 
         <template #end>
@@ -267,13 +298,11 @@ function deleteSelectedProducts() {
           </template>
         </Column>
 
-
       </DataTable>
     </div>
 
     <Dialog v-model:visible="resourceDialog" :style="{ width: '450px' }" :header="isEditMode ? 'Edit Resource' : 'Create Resource'" :modal="true">
       <div class="flex flex-col gap-6">
-        <img v-if="resource.image" :src="`https://primefaces.org/cdn/primevue/images/product/${resource.image}`" :alt="resource.image" class="block m-auto pb-4" />
 
         <div>
           <label for="name" class="block font-bold mb-3">Name</label>
@@ -288,14 +317,13 @@ function deleteSelectedProducts() {
 
           <div class="col-span-4">
             <label for="resourceType" class="block font-bold mb-3">Unit type</label>
-            <Select id="resourceType" v-model="resource.unitId" :options="measurementUnitTypes" optionLabel="label" placeholder="Select a Type" />
+            <Select id="resourceType" v-model="resource.unit" :options="measurementUnitTypes" optionLabel="name" placeholder="Select a Type" />
           </div>
 
           <div class="col-span-8">
             <label for="resourceType" class="block font-bold mb-3">Resource type</label>
-            <Select id="resourceType" v-model="resource.typeId" :options="resourceTypes" optionLabel="label" placeholder="Select a Type" />
+            <Select id="resourceType" v-model="resource.type" :options="resourceTypes" optionLabel="name" placeholder="Select a Type" />
           </div>
-
 
         <div class="grid grid-cols-12 gap-4">
           <div class="col-span-4">
@@ -318,32 +346,6 @@ function deleteSelectedProducts() {
       <template #footer>
         <Button label="Cancel" icon="pi pi-times" text @click="hideDialog" />
         <Button label="Save" icon="pi pi-check" @click="saveResource" />
-      </template>
-    </Dialog>
-
-
-    <Dialog v-model:visible="deleteProductDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
-      <div class="flex items-center gap-4">
-        <i class="pi pi-exclamation-triangle !text-3xl" />
-        <span v-if="product"
-        >Are you sure you want to delete <b>{{ product.name }}</b
-        >?</span
-        >
-      </div>
-      <template #footer>
-        <Button label="No" icon="pi pi-times" text @click="deleteProductDialog = false" />
-        <Button label="Yes" icon="pi pi-check" @click="deleteProduct" />
-      </template>
-    </Dialog>
-
-    <Dialog v-model:visible="deleteProductsDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
-      <div class="flex items-center gap-4">
-        <i class="pi pi-exclamation-triangle !text-3xl" />
-        <span v-if="product">Are you sure you want to delete the selected products?</span>
-      </div>
-      <template #footer>
-        <Button label="No" icon="pi pi-times" text @click="deleteProductsDialog = false" />
-        <Button label="Yes" icon="pi pi-check" text @click="deleteSelectedProducts" />
       </template>
     </Dialog>
   </div>

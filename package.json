@@ -12,11 +12,11 @@
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.17",
-    "@primevue/nuxt-module": "^4.3.4",
     "@fullcalendar/interaction": "^6.1.17",
     "@fullcalendar/timegrid": "^6.1.17",
     "@fullcalendar/vue3": "^6.1.17",
     "@primevue/forms": "^4.3.4",
+    "@primevue/nuxt-module": "^4.3.4",
     "@primevue/themes": "^4.2.5",
     "@sidebase/nuxt-auth": "^0.10.1",
     "@tailwindcss/vite": "^4.1.4",
@@ -24,6 +24,7 @@
     "primeicons": "^7.0.0",
     "primevue": "^4.2.5",
     "tailwindcss-primeui": "^0.5.1",
+    "tdweb": "^1.8.0",
     "vue": "latest",
     "vue-router": "latest"
   },

@@ -6,11 +6,12 @@ const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
 const {status, data: session, getSession} = useAuth()
 const { signOut } = useAuth()
 const config = useRuntimeConfig()
-function handleLogout() {
-  signOut({
+
+const handleLogout = async () => {
+  console.log('log-out')
+  await signOut({
     redirect: false
   })
-
   window.location.href = `http://sandbox.tailaf6362.ts.net:49153/realms/dev/protocol/openid-connect/logout`
 }
 
@@ -31,16 +32,6 @@ function handleLogout() {
         <button type="button" class="layout-topbar-action" @click="toggleDarkMode">
           <i :class="['pi', { 'pi-moon': isDarkTheme, 'pi-sun': !isDarkTheme }]"></i>
         </button>
-        <div class="relative">
-<!--          <button-->
-<!--              v-styleclass="{ selector: '@next', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: true }"-->
-<!--              type="button"-->
-<!--              class="layout-topbar-action layout-topbar-action-highlight"-->
-<!--          >-->
-<!--            <i class="pi pi-palette"></i>-->
-<!--          </button>-->
-          <AppConfigurator />
-        </div>
       </div>
 
       <button

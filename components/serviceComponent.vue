@@ -4,37 +4,12 @@ import { FilterMatchMode } from '@primevue/core/api';
 import { useToast } from 'primevue/usetoast';
 import { onMounted, ref } from 'vue';
 
-onMounted(() => {
-  fetchData()
-});
-
-onMounted( async () => {
-  try {
-    const {data} = await useFetch('/api/getServiceCategories');
-    if (data?.value.items) {
-      serviceTypes.value = data?.value.items.map(item => ({
-        label: item.name,
-        text: item.description,
-        value: item.id
-      })) || [];
-    } else {
-      console.warn('No items in response');
-    }
-  } catch (error) {
-    console.error('Failed to fetch resources types', error);
-  }
-});
-
 const toast = useToast();
 const dt = ref();
 const products = ref();
 const serviceDialog = ref(false);
-const deleteProductDialog = ref(false);
-const deleteProductsDialog = ref(false);
 const services = ref({});
-const selectedProducts = ref();
 const isEditMode = ref(false)
-const dialogItem = ref({})
 const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS }
 });
@@ -42,21 +17,50 @@ const submitted = ref(false);
 const serviceTypes = ref([]);
 const loading = ref(true)
 
+onMounted( async () => {
+  try {
+    const {data} = await useFetch('/api/getServiceCategories');
+    if (data?.value.items) {
+      serviceTypes.value = data?.value.items
+    } else {
+      console.warn('No items in response');
+    }
+  } catch (error) {
+    toast.add({
+      severity: "error",
+      summary: "server error",
+      detail: "Failed to fetch service categories",
+      life: 3000
+    })
+    console.error('Failed to fetch service categories', error);
+  }
+});
 const fetchData = async() => {
-  loading.value = true
   products.value = Array.from({length: 10})
+  loading.value = true
   const {data, error} = await useFetch('/api/getServices')
   if(data?.value){
     products.value = data.value.items;
   }
 
   if (error?.value){
-    console.log('Failed to fetch orders:', error.value)
+    toast.add({
+      severity: "error",
+      summary: "server error",
+      detail: "Failed to fetch services",
+      life: 3000
+    })
+    console.log('Failed to fetch services:', error.value)
   }
   setTimeout(() => {
     loading.value = false
   }, 250)
 }
+
+onMounted(() => {
+  fetchData()
+});
+
 
 function openNew() {        //Opens dialog for creation
   isEditMode.value = false
@@ -82,11 +86,11 @@ async function saveResource() {
             ? {
               id: services.value.id,
               manHours: services.value.humanHours,
-              categoryId: services.value.category.value
+              categoryId: services.value.category.id
             }
             : {
               humanHours: services.value.humanHours,
-              category: services.value.category.value
+              category: services.value.category.id
             })
       };
 
@@ -95,13 +99,32 @@ async function saveResource() {
         body: payload
       })
 
+      toast.add({
+        severity: "success",
+        ...(services.value.id ? {
+              summary: "Updated",
+              detail: "Service successfully updated"
+            }
+            : {
+              summary: "Created",
+              detail: "Service successfully created"
+            }),
+        life: 3000
+      })
+
     } catch (error){
+      toast.add({
+        severity: "error",
+        summary: "server error",
+        detail: "Service creation/update failed",
+        life: 3000
+      })
       console.error('services creation failed', error)
     }
 
     serviceDialog.value = false
     await fetchData()
-    products.value = [...services]
+    products.value = [...products.value, services]
     services.value = {}
   }
 }
@@ -116,43 +139,8 @@ function editService(item) {
   serviceDialog.value = true;
 }
 
-function confirmDeleteProduct(prod) {
-  product.value = prod;
-  deleteProductDialog.value = true;
-}
-
-function deleteProduct() {
-  products.value = products.value.filter((val) => val.id !== product.value.id);
-  deleteProductDialog.value = false;
-  product.value = {};
-  toast.add({ severity: 'success', summary: 'Successful', detail: 'Product Deleted', life: 3000 });
-}
-
-function findIndexById(id) {
-  let index = -1;
-  for (let i = 0; i < products.value.length; i++) {
-    if (products.value[i].id === id) {
-      index = i;
-      break;
-    }
-  }
-
-  return index;
-}
-
 function exportCSV() {
   dt.value.exportCSV();
-}
-
-function confirmDeleteSelected() {
-  deleteProductsDialog.value = true;
-}
-
-function deleteSelectedProducts() {
-  products.value = products.value.filter((val) => !selectedProducts.value.includes(val));
-  deleteProductsDialog.value = false;
-  selectedProducts.value = null;
-  toast.add({ severity: 'success', summary: 'Successful', detail: 'Products Deleted', life: 3000 });
 }
 </script>
 
@@ -162,7 +150,6 @@ function deleteSelectedProducts() {
       <Toolbar class="mb-6">
         <template #start>
           <Button label="New" icon="pi pi-plus" severity="secondary" class="mr-2" @click="openNew" />
-          <Button label="Delete" icon="pi pi-trash" severity="secondary" @click="confirmDeleteSelected" :disabled="!selectedProducts || !selectedProducts.length" />
         </template>
 
         <template #end>
@@ -172,7 +159,6 @@ function deleteSelectedProducts() {
 
       <DataTable
           ref="dt"
-
           :value="products"
           dataKey="id"
           :paginator="true"
@@ -248,7 +234,7 @@ function deleteSelectedProducts() {
 
         <div>
           <label for="servicesType" class="block font-bold mb-3">Service category</label>
-          <Select v-model="services.category" :options="serviceTypes" optionLabel="label" required placeholder="Select a Type" />
+          <Select v-model="services.category" :options="serviceTypes" optionLabel="name" required placeholder="Select a Type" />
         </div>
 
         <div class="grid grid-cols-12 gap-4">
@@ -271,29 +257,5 @@ function deleteSelectedProducts() {
       </template>
     </Dialog>
 
-    <Dialog v-model:visible="deleteProductDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
-      <div class="flex items-center gap-4">
-        <i class="pi pi-exclamation-triangle !text-3xl" />
-        <span v-if="product"
-        >Are you sure you want to delete <b>{{ product.name }}</b
-        >?</span
-        >
-      </div>
-      <template #footer>
-        <Button label="No" icon="pi pi-times" text @click="deleteProductDialog = false" />
-        <Button label="Yes" icon="pi pi-check" @click="deleteProduct" />
-      </template>
-    </Dialog>
-
-    <Dialog v-model:visible="deleteProductsDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
-      <div class="flex items-center gap-4">
-        <i class="pi pi-exclamation-triangle !text-3xl" />
-        <span v-if="product">Are you sure you want to delete the selected products?</span>
-      </div>
-      <template #footer>
-        <Button label="No" icon="pi pi-times" text @click="deleteProductsDialog = false" />
-        <Button label="Yes" icon="pi pi-check" text @click="deleteSelectedProducts" />
-      </template>
-    </Dialog>
   </div>
 </template>

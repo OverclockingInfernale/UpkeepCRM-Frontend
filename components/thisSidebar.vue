@@ -56,6 +56,13 @@ const items = ref([
     command: () => {
       router.push('/chatbot')
     }
+  },
+  {
+    label: "Clients",
+    icon: PrimeIcons.ID_CARD,
+    command: () => {
+      router.push('/clients')
+    }
   }
 
 ]);

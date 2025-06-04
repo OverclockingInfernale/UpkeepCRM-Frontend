@@ -1,7 +1,7 @@
-<script setup>
+<script>
 
 </script>
 
 <template>
-  <p>ChatBot</p>
+  <p>chatbot goes here</p>
 </template>
