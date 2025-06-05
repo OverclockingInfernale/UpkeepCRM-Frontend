@@ -63,6 +63,27 @@ const items = ref([
     command: () => {
       router.push('/clients')
     }
+  },
+  {
+    label: "Service category",
+    icon: PrimeIcons.LIST,
+    command: () => {
+      router.push('/serviceCategory')
+    }
+  },
+  {
+    label: "Resource Type",
+    icon: PrimeIcons.BOX,
+    command: () => {
+      router.push('/resourceType')
+    }
+  },
+  {
+    label: "Measurement Units",
+    icon: PrimeIcons.CALCULATOR,
+    command: () => {
+      router.push('/measurementUnit')
+    }
   }
 
 ]);

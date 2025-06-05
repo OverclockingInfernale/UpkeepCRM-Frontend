@@ -20,7 +20,6 @@ export default defineEventHandler(async (event) => {
             method: event.method,
             body: serviceData
         })
-        console.log(response)
         return response
     }
 
