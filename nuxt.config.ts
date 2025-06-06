@@ -20,13 +20,13 @@ export default defineNuxtConfig({
 
     public: {
       host_url: process.env.HOST || '',
-      api_url: process.env.API_URL,
+      api_url: '',
     }
   },
 
   auth: {
     globalAppMiddleware: true,
-    baseURL: process.env.AUTH_BASE_URL
+    baseURL: 'http://sandbox.tailaf6362.ts.net:3000/api/auth'
   },
 
 
