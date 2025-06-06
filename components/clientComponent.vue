@@ -15,12 +15,11 @@ const clientDialog = ref(false);
 const client = ref({});
 const clientPriority = ref([])
 const clientStatuses = ref([])
-const selectedProducts = ref();
 const loading = ref(true)
 const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS }
 });
-const submitted = ref(false);
+const submitted = ref(false)
 const isEditMode = ref(false)
 
 function formatCurrency(value) {
@@ -32,7 +31,7 @@ const fetchData = async() => {
   try {
     loading.value = true;
     products.value = Array.from({length: 10})
-    const {data, error} = await useFetch('/api/getClients')
+    const {data, error} = await useFetch('/api/clients')
     if (data?.value) {
       products.value = data.value.items;
     }
@@ -47,7 +46,7 @@ const fetchData = async() => {
   }
 
   try{
-    const {data, error} = await useFetch('/api/getClientPriority')
+    const {data, error} = await useFetch('/api/clientPriority')
     if(data?.value){
       clientPriority.value = data.value.items
     }
@@ -62,7 +61,7 @@ const fetchData = async() => {
   }
 
   try{
-    const {data, error} = await useFetch('api/getClientStatus')
+    const {data, error} = await useFetch('api/clientStatus')
     if(data?.value){
       clientStatuses.value = data.value.items
     }
@@ -179,7 +178,6 @@ function exportCSV() {
 
       <DataTable
           ref="dt"
-          v-model:selection="selectedProducts"
           :value="products"
           dataKey="id"
           :paginator="true"

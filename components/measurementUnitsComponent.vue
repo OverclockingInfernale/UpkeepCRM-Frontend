@@ -20,7 +20,7 @@ const fetchData = async() => {
   loading.value = true
 
   try {
-    const {data} = await useFetch('/api/getMeasurementUnits');
+    const {data} = await useFetch('/api/measurementUnits');
     if (data?.value.items) {
       items.value = data?.value.items
     } else {
@@ -67,7 +67,7 @@ async function saveItem() {
         description: unitTypes.value.description,
       };
 
-      await $fetch('/api/getMeasurementUnits', {
+      await $fetch('/api/measurementUnits', {
         method: unitTypes.value.id ? 'PUT' :'POST',
         body: payload
       })

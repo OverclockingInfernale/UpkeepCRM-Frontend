@@ -12,8 +12,6 @@ const toast = useToast();
 const dt = ref();
 const products = ref();
 const resourceDialog = ref(false);
-const deleteProductDialog = ref(false);
-const deleteProductsDialog = ref(false);
 const resource = ref({});
 const selectedProducts = ref();
 const loading = ref(true)
@@ -34,7 +32,7 @@ const fetchData = async() => {
   try {
     loading.value = true;
     products.value = Array.from({length: 10})
-    const {data, error} = await useFetch('/api/getResources')
+    const {data, error} = await useFetch('/api/resources')
     if (data?.value) {
       products.value = data.value.items;
     }
@@ -49,7 +47,7 @@ const fetchData = async() => {
   }
 
   try {
-    const {data} = await useFetch('/api/getResourceTypes');
+    const {data} = await useFetch('/api/resourceTypes');
     if (data?.value.items) {
       resourceTypes.value = data?.value.items
     } else {
@@ -66,7 +64,7 @@ const fetchData = async() => {
   }
 
   try{
-    const {data} = await useFetch('/api/getMeasurementUnits');
+    const {data} = await useFetch('/api/measurementUnits');
     if(data?.value) {
       measurementUnitTypes.value = data?.value.items
     }
@@ -112,7 +110,7 @@ async function saveResource() {
         unitId: resource.value.unit?.id
       };
 
-      await $fetch('/api/getResources', {
+      await $fetch('/api/resources', {
         method: resource.value.id ? 'PUT' :'POST',
         body: payload
       })
@@ -160,57 +158,10 @@ function editResource(item) {
   resourceDialog.value = true;
 }
 
-function editProduct(prod) {
-  resource.value = { ...prod };
-  resourceDialog.value = true;
-}
 
-function confirmDeleteProduct(prod) {
-  product.value = prod;
-  deleteProductDialog.value = true;
-}
-
-function deleteProduct() {
-  products.value = products.value.filter((val) => val.id !== product.value.id);
-  deleteProductDialog.value = false;
-  product.value = {};
-  toast.add({ severity: 'success', summary: 'Successful', detail: 'Product Deleted', life: 3000 });
-}
-
-function findIndexById(id) {
-  let index = -1;
-  for (let i = 0; i < products.value.length; i++) {
-    if (products.value[i].id === id) {
-      index = i;
-      break;
-    }
-  }
-
-  return index;
-}
-
-function createId() {
-  let id = '';
-  var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for (var i = 0; i < 5; i++) {
-    id += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return id;
-}
 
 function exportCSV() {
   dt.value.exportCSV();
-}
-
-function confirmDeleteSelected() {
-  deleteProductsDialog.value = true;
-}
-
-function deleteSelectedProducts() {
-  products.value = products.value.filter((val) => !selectedProducts.value.includes(val));
-  deleteProductsDialog.value = false;
-  selectedProducts.value = null;
-  toast.add({ severity: 'success', summary: 'Successful', detail: 'Products Deleted', life: 3000 });
 }
 </script>
 

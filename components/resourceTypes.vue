@@ -19,7 +19,7 @@ const fetchData = async() => {
   items.value = Array.from({length: 10})
   loading.value = true
   try {
-    const {data} = await useFetch('/api/getResourceTypes');
+    const {data} = await useFetch('/api/resourceTypes');
     if (data?.value.items) {
       items.value = data?.value.items
     } else {
@@ -66,7 +66,7 @@ async function saveItem() {
         description: resourceTypes.value.description,
       };
 
-      await $fetch('/api/getResourceTypes', {
+      await $fetch('/api/resourceTypes', {
         method: resourceTypes.value.id ? 'PUT' :'POST',
         body: payload
       })

@@ -65,6 +65,13 @@ const items = ref([
     }
   },
   {
+    label: "Employees",
+    icon: PrimeIcons.PAPERCLIP,
+    command: () => {
+      router.push('/employees')
+    }
+  },
+  {
     label: "Service category",
     icon: PrimeIcons.LIST,
     command: () => {
@@ -84,7 +91,22 @@ const items = ref([
     command: () => {
       router.push('/measurementUnit')
     }
+  },
+  {
+    label: "Client Priority",
+    icon: PrimeIcons.BARS,
+    command: () => {
+      router.push('/clientPriorities')
+    }
+  },
+  {
+    label: "Equipment Types",
+    icon: PrimeIcons.KEY,
+    command: () => {
+      router.push('/equipmentTypes')
+    }
   }
+
 
 ]);
 </script>

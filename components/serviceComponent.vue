@@ -19,7 +19,7 @@ const loading = ref(true)
 
 onMounted( async () => {
   try {
-    const {data} = await useFetch('/api/getServiceCategories');
+    const {data} = await useFetch('/api/serviceCategories');
     if (data?.value.items) {
       serviceTypes.value = data?.value.items
     } else {
@@ -38,7 +38,7 @@ onMounted( async () => {
 const fetchData = async() => {
   products.value = Array.from({length: 10})
   loading.value = true
-  const {data, error} = await useFetch('/api/getServices')
+  const {data, error} = await useFetch('/api/services')
   if(data?.value){
     products.value = data.value.items;
   }
@@ -94,7 +94,7 @@ async function saveResource() {
             })
       };
 
-      await $fetch('/api/getServices', {
+      await $fetch('/api/services', {
         method: services.value.id ? 'PUT' :'POST',
         body: payload
       })
