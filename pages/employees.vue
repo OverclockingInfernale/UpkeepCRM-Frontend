@@ -4,5 +4,4 @@
 
 <template>
   <employees-component/>
-
 </template>

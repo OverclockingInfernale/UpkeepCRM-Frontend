@@ -1,5 +1,4 @@
 <script setup>
-import { ProductService } from '~/service/ProductService.vue';
 import { FilterMatchMode } from '@primevue/core/api';
 import { useToast } from 'primevue/usetoast';
 import { onMounted, ref } from 'vue';
@@ -106,7 +105,7 @@ async function saveClient() {
         statusId: client.value.status?.id,
       };
 
-      await $fetch('/api/getClients', {
+      await $fetch('/api/clients', {
         method: client.value.id ? 'PUT' :'POST',
         body: payload
       })
@@ -258,7 +257,7 @@ function exportCSV() {
 
         <div>
           <label for="phone" class="block font-bold mb-3">Phone number</label>
-          <InputText id="phone" v-model="client.phone" required="true" rows="3" cols="20" fluid />
+          <InputMask id="phone" v-model="client.phone" mask="+79999999999" placeholder="+7 (___)-___-__-__" required="true" rows="3" cols="20" fluid />
         </div>
 
         <div>

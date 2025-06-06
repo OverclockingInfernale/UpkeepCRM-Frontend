@@ -20,7 +20,7 @@ const fetchData = async() => {
   loading.value = true
 
   try {
-    const {data} = await useFetch('/api/getMeasurementUnits');
+    const {data} = await useFetch('/api/employees');
     if (data?.value.items) {
       items.value = data?.value.items
     } else {
@@ -30,10 +30,10 @@ const fetchData = async() => {
     toast.add({
       severity: "error",
       summary: "server error",
-      detail: "Failed to fetch service categories",
+      detail: "Failed to fetch employees",
       life: 3000
     })
-    console.error('Failed to fetch service categories', error);
+    console.error('Failed to fetch employees', error);
   }
   setTimeout(() => {
     loading.value = false
@@ -67,7 +67,7 @@ async function saveItem() {
         description: employees.value.description,
       };
 
-      await $fetch('/api/getMeasurementUnits', {
+      await $fetch('/api/employees', {
         method: employees.value.id ? 'PUT' :'POST',
         body: payload
       })
@@ -76,11 +76,11 @@ async function saveItem() {
         severity: "success",
         ...(employees.value.id ? {
               summary: "Updated",
-              detail: "Service successfully updated"
+              detail: "Employees successfully updated"
             }
             : {
               summary: "Created",
-              detail: "Service successfully created"
+              detail: "Employees successfully created"
             }),
         life: 3000
       })

@@ -169,6 +169,7 @@ function exportCSV() {
           currentPageReportTemplate="Showing {first} to {last} of {totalRecords} services"
           @row-click="onRowClick"
           :row-class="() => 'hover:bg-blue-50 cursor-pointer'"
+          auto-layout=auto-layout
       >
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
@@ -194,13 +195,13 @@ function exportCSV() {
             <span v-else>{{data?.description}}</span>
           </template>
         </Column>
-        <Column field="baseCost" header="Base Cost" sortable>>
+        <Column field="basePrice" header="Base Cost" sortable>>
           <template #body="{data}">
             <Skeleton v-if="loading" width="6rem" />
             <span v-else>{{data?.basePrice}}</span>
           </template>
         </Column>
-        <Column field="manHours" header="Man hours" sortable>>
+        <Column field="humanHours" header="Man hours" sortable>>
           <template #body="{data}">
             <Skeleton v-if="loading" width="6rem" />
             <span v-else>{{data?.humanHours}}</span>

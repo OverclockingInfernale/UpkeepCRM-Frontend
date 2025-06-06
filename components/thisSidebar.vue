@@ -1,8 +1,8 @@
 <template>
 <div class="layout-sidebar">
-  <Menu :model="items" class="layout-menu">
+  <PanelMenu :model="items" class="layout-menu">
 
-  </Menu>
+  </PanelMenu>
 </div>
 </template>
 
@@ -14,6 +14,12 @@ import {useRouter} from "vue-router"
 const router = useRouter()
 
 const items = ref([
+  {
+    label: "Main",
+    icon: 'pi pi-home',
+    expanded: true,
+    items: [
+
   {
     label: "Dashboard",
     icon: PrimeIcons.CHART_BAR,
@@ -63,14 +69,12 @@ const items = ref([
     command: () => {
       router.push('/clients')
     }
-  },
+  }]},
   {
-    label: "Employees",
-    icon: PrimeIcons.PAPERCLIP,
-    command: () => {
-      router.push('/employees')
-    }
-  },
+    label: "Dictionary",
+    icon: PrimeIcons.BOOK,
+    items: [
+
   {
     label: "Service category",
     icon: PrimeIcons.LIST,
@@ -106,7 +110,5 @@ const items = ref([
       router.push('/equipmentTypes')
     }
   }
-
-
-]);
+    ]}]);
 </script>

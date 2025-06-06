@@ -64,6 +64,7 @@ async function saveItem() {
       const payload = {
         ...(equipmentTypes.value.id && {id: equipmentTypes.value.id}),    //Conditional spread operator to define inclusion of id and preparing payload for put request
         name: equipmentTypes.value.name,
+        description: equipmentTypes.value.description
       };
 
       await $fetch('/api/equipmentTypes', {
@@ -161,7 +162,7 @@ function exportCSV() {
           </template>
         </Column>
 
-        <Column field="name" header="Name" sortable>
+        <Column field="description" header="Description" sortable>
           <template #body="{data}">
             <Skeleton v-if="loading" width="12rem" />
             <span v-else>{{data?.description}}</span>
