@@ -153,8 +153,6 @@ const onRowClick = (event) => {
 
 function editResource(item) {
   resource.value = { ...item };
-  console.log('resource object comparison', ' and ', resource.value.type.id)
-  // services.value.category = serviceTypes.value.find(t => t.id === services.value.category.id)
   resourceDialog.value = true;
 }
 

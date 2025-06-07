@@ -141,7 +141,7 @@ function exportCSV() {
           :filters="filters"
           paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
           :rowsPerPageOptions="[5, 10, 25]"
-          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} services"
+          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} service categories"
           @row-click="onRowClick"
           :row-class="() => 'hover:bg-blue-50 cursor-pointer'"
       >

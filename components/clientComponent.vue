@@ -21,11 +21,6 @@ const filters = ref({
 const submitted = ref(false)
 const isEditMode = ref(false)
 
-function formatCurrency(value) {
-  if (value) return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-  return;
-}
-
 const fetchData = async() => {
   try {
     loading.value = true;
