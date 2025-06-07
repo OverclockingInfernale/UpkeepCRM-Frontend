@@ -139,7 +139,7 @@ function exportCSV() {
           :filters="filters"
           paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
           :rowsPerPageOptions="[5, 10, 25]"
-          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} resource Types"
+          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} Equipment types"
           @row-click="onRowClick"
           :row-class="() => 'hover:bg-blue-50 cursor-pointer'"
       >
@@ -172,7 +172,7 @@ function exportCSV() {
       </DataTable>
     </div>
 
-    <Dialog v-model:visible="serviceDialog" :style="{ width: '450px' }" :header="isEditMode ? 'Edit Resource Type' : 'Create Resource Type'" :modal="true">
+    <Dialog v-model:visible="serviceDialog" :style="{ width: '450px' }" :header="isEditMode ? 'Edit Equipment Type' : 'Create Equipment Type'" :modal="true">
       <div class="flex flex-col gap-6">
 
         <div>

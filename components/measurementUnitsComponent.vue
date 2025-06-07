@@ -139,13 +139,13 @@ function exportCSV() {
           :filters="filters"
           paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
           :rowsPerPageOptions="[5, 10, 25]"
-          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} resource Types"
+          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} Measurement Units"
           @row-click="onRowClick"
           :row-class="() => 'hover:bg-blue-50 cursor-pointer'"
       >
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
-            <h4 class="m-0">Manage unitTypes</h4>
+            <h4 class="m-0">Manage Measurement Units</h4>
             <IconField>
               <InputIcon>
                 <i class="pi pi-search" />
@@ -171,7 +171,7 @@ function exportCSV() {
       </DataTable>
     </div>
 
-    <Dialog v-model:visible="serviceDialog" :style="{ width: '450px' }" :header="isEditMode ? 'Edit Resource Type' : 'Create Resource Type'" :modal="true">
+    <Dialog v-model:visible="serviceDialog" :style="{ width: '450px' }" :header="isEditMode ? 'Edit Measurement unit' : 'Create Measurement unit'" :modal="true">
       <div class="flex flex-col gap-6">
 
         <div>

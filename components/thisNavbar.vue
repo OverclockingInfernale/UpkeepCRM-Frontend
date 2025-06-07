@@ -1,11 +1,15 @@
 <script setup>
 import AppConfigurator from "~/layouts/layout/AppConfigurator.vue";
 import { useLayout } from '~/layouts/layout/composables/use-layout.vue';
+import {useToast} from "primevue/usetoast";
 const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
 
-const {status, data: session, getSession} = useAuth()
-const { signOut } = useAuth()
+const toast = useToast();
+const { signOut, data: session } = useAuth()
+const loading = ref(true)
 const config = useRuntimeConfig()
+
+const username = session.value.user.name
 
 const handleLogout = async () => {
   console.log('log-out')
@@ -43,6 +47,7 @@ const handleLogout = async () => {
 
       <div class="layout-topbar-menu hidden lg:block">
         <div class="layout-topbar-menu-content">
+          <span>{{username}}</span>
           <button type="button" class="layout-topbar-action">
             <i class="pi pi-user"></i>
             <span>Profile</span>

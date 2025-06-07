@@ -16,15 +16,16 @@ export default defineEventHandler(async (event) => {
 
         const response = await useApiFetch('/api/employees', event, {
             method: event.method,
-            body: payload
+            body: payload,
         })
         return response
     }
 
     if(event.method === 'PUT') {
+        const query = getQuery(event)
         const payload = await readBody(event)
 
-        const response = await useApiFetch(`/api/employees/${payload.id}`, event, {
+        const response = await useApiFetch(`/api/employees/${query.userId}`, event, {
             method: event.method,
             body: payload
         })

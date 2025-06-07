@@ -2,6 +2,7 @@
 import { FilterMatchMode } from '@primevue/core/api';
 import { useToast } from 'primevue/usetoast';
 import { onMounted, ref } from 'vue';
+import {formatDate} from "@fullcalendar/core";
 
 const toast = useToast();
 const dt = ref();
@@ -13,6 +14,8 @@ const filters = ref({
 });
 const submitted = ref(false);
 const employees = ref({});
+const users = ref([]);
+const isActive = ref([true, false])
 const loading = ref(true)
 
 const fetchData = async() => {
@@ -35,6 +38,24 @@ const fetchData = async() => {
     })
     console.error('Failed to fetch employees', error);
   }
+
+  try {
+    const {data} = await useFetch('/api/getUsers');
+    if (data?.value.items) {
+      users.value = data?.value.items
+    } else {
+      console.warn('No items in response');
+    }
+  } catch (error) {
+    toast.add({
+      severity: "error",
+      summary: "server error",
+      detail: "Failed to fetch users",
+      life: 3000
+    })
+    console.error('Failed to fetch users', error);
+  }
+
   setTimeout(() => {
     loading.value = false
   }, 250)
@@ -47,6 +68,7 @@ onMounted(() => {
 
 function openNew() {        //Opens dialog for creation
   isEditMode.value = false
+  console.log('edit mode', isEditMode.value)
   employees.value = {};
   submitted.value = false;
   serviceDialog.value = true;
@@ -59,22 +81,26 @@ function hideDialog() {
 
 async function saveItem() {
   submitted.value = true;
-  if (employees?.value.name?.trim()) {
+  if (employees?.value) {
     try {
       const payload = {
-        ...(employees.value.id && {id: employees.value.id}),    //Conditional spread operator to define inclusion of id and preparing payload for put request
-        name: employees.value.name,
-        description: employees.value.description,
+        rate: employees.value.rate,
+        position: employees.value.position,
+        hireDate: employees.value.hireDate.toISOString().split('T')[0], //converting date to exclude timezone
+        isActive: employees.value.isActive
       };
 
       await $fetch('/api/employees', {
-        method: employees.value.id ? 'PUT' :'POST',
-        body: payload
+        method: isEditMode.value ? 'PUT' : 'POST',
+        query: {
+          userId: employees.value.userId
+        },
+        body: isEditMode.value ? payload : {...payload, userId: employees.value.userId} //modifying payload to match expected structure on post endpoint
       })
 
       toast.add({
         severity: "success",
-        ...(employees.value.id ? {
+        ...(employees.value.userId ? {
               summary: "Updated",
               detail: "Employees successfully updated"
             }
@@ -88,11 +114,11 @@ async function saveItem() {
     } catch (error){
       toast.add({
         severity: "error",
-        summary: "server error",
-        detail: "Service creation/update failed",
+        summary: "Server error",
+        detail: "Employee creation/update failed",
         life: 3000
       })
-      console.error('employees creation failed', error)
+      console.error('Employees creation failed', error)
     }
 
     serviceDialog.value = false
@@ -122,7 +148,7 @@ function exportCSV() {
     <div class="card">
       <Toolbar class="mb-6">
         <template #start>
-          <Button label="New" disabled icon="pi pi-plus" severity="secondary" class="mr-2" @click="openNew" />
+          <Button label="New" icon="pi pi-plus" severity="secondary" class="mr-2" @click="openNew" />
         </template>
 
         <template #end>
@@ -139,8 +165,8 @@ function exportCSV() {
           :filters="filters"
           paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
           :rowsPerPageOptions="[5, 10, 25]"
-          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} resource Types"
-<!--          @row-click="onRowClick"-->
+          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} employees "
+          @row-click="onRowClick"
           :row-class="() => 'hover:bg-blue-50 cursor-pointer'"
       >
         <template #header>
@@ -162,49 +188,42 @@ function exportCSV() {
           </template>
         </Column>
 
-        <Column field="description" header="Description" sortable>>
-          <template #body="{data}">
-            <Skeleton v-if="loading" width="18rem" />
-            <span v-else>{{data?.description}}</span>
-          </template>
-        </Column>
-
-        <Column field="description" header="Description" sortable>>
+        <Column field="phone" header="Phone" sortable>>
           <template #body="{data}">
             <Skeleton v-if="loading" width="18rem" />
             <span v-else>{{data?.phone}}</span>
           </template>
         </Column>
 
-        <Column field="description" header="Description" sortable>>
+        <Column field="email" header="Email" sortable>>
           <template #body="{data}">
             <Skeleton v-if="loading" width="18rem" />
             <span v-else>{{data?.email}}</span>
           </template>
         </Column>
 
-        <Column field="description" header="Description" sortable>>
+        <Column field="rate" header="Rate" sortable>>
           <template #body="{data}">
             <Skeleton v-if="loading" width="18rem" />
             <span v-else>{{data?.rate}}</span>
           </template>
         </Column>
 
-        <Column field="description" header="Description" sortable>>
+        <Column field="position" header="Position" sortable>>
           <template #body="{data}">
             <Skeleton v-if="loading" width="18rem" />
             <span v-else>{{data?.position}}</span>
           </template>
         </Column>
 
-        <Column field="description" header="Description" sortable>>
+        <Column field="hireDate" header="Hire date" sortable>>
           <template #body="{data}">
             <Skeleton v-if="loading" width="18rem" />
             <span v-else>{{data?.hireDate}}</span>
           </template>
         </Column>
 
-        <Column field="description" header="Description" sortable>>
+        <Column field="isActive" header="Status" sortable>>
           <template #body="{data}">
             <Skeleton v-if="loading" width="18rem" />
             <span v-else>{{data?.isActive}}</span>
@@ -214,18 +233,37 @@ function exportCSV() {
       </DataTable>
     </div>
 
-    <Dialog v-model:visible="serviceDialog" :style="{ width: '450px' }" :header="isEditMode ? 'Edit Resource Type' : 'Create Resource Type'" :modal="true">
+    <Dialog v-model:visible="serviceDialog" :style="{ width: '450px' }" :header="isEditMode ? 'Edit Employee' : 'Create Employee'" :modal="true">
       <div class="flex flex-col gap-6">
 
         <div>
-          <label for="name" class="block font-bold mb-3">Name</label>
-          <InputText id="name" v-model.trim="employees.name" required="true" autofocus :invalid="submitted && !employees.name" fluid />
-          <small v-if="submitted && !employees.name" class="text-red-500">Name is required.</small>
+          <label for="users" class="block font-bold mb-3">User</label>
+          <Select id="users" v-model="employees.userId" :options="users" option-label="name" option-value="id" required="true" autofocus fluid />
+          <small v-if="submitted && !employees.userId" class="text-red-500">User is required.</small>
         </div>
 
-        <div>
-          <label for="description" class="block font-bold mb-3">Description</label>
-          <Textarea id="description" v-model="employees.description" required="true" rows="3" cols="20" fluid />
+        <div class="grid grid-cols-12 gap-4">
+          <div class="col-span-6">
+            <label for="rate" class="block font-bold mb-3">Rate</label>
+            <InputNumber id="rate" type="number" v-model.number="employees.rate" required="true" autofocus locale="en-US" fluid  />
+          </div>
+
+          <div class="col-span-6">
+            <label for="name" class="block font-bold mb-3">Position</label>
+            <InputText id="email" v-model.trim="employees.position" required="true" autofocus fluid />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-4">
+          <div class="col-span-6">
+            <label for="date" class="block font-bold mb-3">Hire date</label>
+            <DatePicker v-model="employees.hireDate" id="date" date-format="yy/mm/dd" :show-time="false"/>
+          </div>
+
+          <div class="col-span-6">
+            <label for="name" class="block font-bold mb-3">Status</label>
+            <select-button v-model="employees.isActive" :options="isActive" size="large"/>
+          </div>
         </div>
 
       </div>

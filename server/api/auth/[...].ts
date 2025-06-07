@@ -1,5 +1,9 @@
 import {NuxtAuthHandler} from "#auth";
+import {getUserByIdentityId} from "~/server/utils/getUserByIdentityId";
+import {H3Event} from "h3";
 
+// @ts-ignore
+// @ts-ignore
 export default NuxtAuthHandler ({
     secret: 'alisa',
     providers: [
@@ -46,13 +50,17 @@ export default NuxtAuthHandler ({
         async signIn({account, profile}) {
             return true
         },
-        async jwt({ token, account }) {
+        async jwt({ token, account , profile}) {
             const config = useRuntimeConfig()
+
             if(account){
                 token.accessToken = account.access_token
                 token.refreshToken = account.refresh_token
                 // @ts-ignore
                 token.expiresAt = account.expires_at * 1000
+                token.id = profile?.sub
+                token.name = profile?.name
+                token.email = profile?.email
             }
 
             const expiresAt = (token as any).expiresAt as number | undefined
@@ -92,10 +100,18 @@ export default NuxtAuthHandler ({
             return token
         },
 
-        // async session({session, token}){
-        //     session.accessToken = token.accessToken
-        //     session.expires = to
-        // }
+        session: ( async ({session, token}: any, event: H3Event)=> {        //ts is insane
+            // if(token){
+            //     const user = await getUserByIdentityId(token.id, event)
+            //     if(user) {
+            //         session.user.id = user.id
+            //         session.user.username = user.username
+            //         session.user.phone = user.phone
+            //         session.user.email = user.email
+            //     }
+            // }
+            return session
+        })  as any
     },
     events: {
         async signIn(message) {
