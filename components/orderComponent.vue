@@ -17,6 +17,7 @@ const submitted = ref(false);
 const resourceTypes = ref({});
 const loading = ref(true)
 const isHidden = ref(null)
+const subLoading = ref(true)
 
 const fetchData = async() => {
   items.value = Array.from({length: 10})
@@ -105,6 +106,7 @@ async function saveItem() {
 }
 
 async function fetchServicesAndResources(id){
+  subLoading.value = true
   if(!id){
     console.warn('Id is undefined in fetchServicesAndResources')
   }
@@ -112,13 +114,13 @@ async function fetchServicesAndResources(id){
     const [serviceData, resourceData] = await Promise.all([
       $fetch('/api/order-service', {
         method: 'GET',
-        query: {
+        params: {
           orderId: id
         }
       }),
       $fetch('api/order-resources', {
         method: 'GET',
-        query: {
+        params: {
           orderId: id
         }
       })
@@ -128,7 +130,7 @@ async function fetchServicesAndResources(id){
   } catch (e){
     console.error('Error fetching services-resources')
   }
-
+  subLoading.value = false
 }
 const onRowClick = (event) => {    //opens dialog for edit
   isEditMode.value = true
@@ -148,6 +150,31 @@ function exportCSV() {
 function toggleCard(index) {
   isHidden.value = isHidden.value === index ? null : index
 }
+
+function handleClick(index, item){
+  if(!item?.id){
+    console.warn('No id in handleClick')
+  }
+
+  fetchServicesAndResources(item.id)
+  toggleCard(index)
+}
+
+function statusColor(statusId) {
+  switch (statusId) {
+    case 1:
+      return 'text-md bg-blue-100 text-blue-600'
+    case 2:
+      return 'text-md bg-yellow-100 text-yellow-500'
+    case 3:
+      return 'text-md bg-green-100 text-green-600'
+    case 4:
+      return 'text-md bg-red-100 text-red-600'
+    default:
+      return 'bg-gray-100 text-gray-500'
+  }
+}
+
 
 </script>
 
@@ -170,7 +197,7 @@ function toggleCard(index) {
           :paginator="true"
           :rows="10"
           :rowsPerPageOptions="[5, 10, 25]"
-          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} resource Types"
+          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} Orders "
       >
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
@@ -190,13 +217,13 @@ function toggleCard(index) {
               :key="item?.id"
               class="w-full"
           >
-            <Card class="hover:bg-blue-50 mb-4 shadow-md cursor-pointer" @click="() => {fetchServicesAndResources(item.id); toggleCard(index)}">
+            <Card class="hover:bg-blue-50 mb-4 shadow-md cursor-pointer" @click="handleClick(index, item)">
               <template #title>
                 <div class="flex justify-between items-center">
                   <Skeleton v-if="loading" width="10rem" />
                   <template v-else>
                     <span class="font-bold text-lg">{{ item?.name }}</span>
-                    <span class="text-sm text-blue-600">{{ item?.status?.name }}</span>
+                    <span :class="statusColor(item?.status.id)">{{ item?.status?.name || 'No status'}}</span>
                   </template>
                 </div>
               </template>
@@ -206,28 +233,24 @@ function toggleCard(index) {
                   {{ item?.client?.name || 'No client' }}
                 </div>
 
-                <div v-show="isHidden === index" class="mt-3 transition-all duration-300">
+                <div v-show="isHidden === index" class="mt-3 transition-all animate-duration-700 ease-in-out overflow-hidden">
                   <!-- Expanded content -->
                   <div class="grid grid-cols-2 gap-2">
                     <div><strong>Status:</strong> {{ item?.status?.name }}</div>
                     <div><strong>Phone:</strong> {{ item?.client?.phone || 'N/A' }}</div>
 
-                    <div v-if="services[item?.id]" class="col-span-2"><strong>Services:</strong>
-                      <ul class="list-disc list-inside ml-4">
-                        <li v-for="service in services[item?.id] || []" :key="service.id">{{ service.name }}</li>
+                    <Skeleton v-if="loading" width="8rem" />
+                    <div v-else-if="services" class="col-span-2"><strong>Services:</strong>
+                      <ul class="list-disc list-inside">
+                        <li v-for="service in services" :key="service.id">{{ service.serviceName }}</li>
                       </ul>
-                    </div>
-                    <div v-else class="col-span-2">
-                      <strong>Services: -----</strong>
                     </div>
 
-                    <div v-if="resources[item?.id]" class="col-span-2"><strong>Resources:</strong>
-                      <ul class="list-disc list-inside ml-4">
-                        <li v-for="(resource, i) in resources[item?.id] || []" :key="resource.id">{{ resource.name }}</li>
+                    <Skeleton v-if="loading" width="8rem" />
+                    <div v-else-if="resources" class="col-span-2"><strong>Resources:</strong>
+                      <ul class="list-disc list-inside">
+                        <li v-for="resource in resources" :key="resource.id">{{ resource.resourceName }}</li>
                       </ul>
-                    </div>
-                    <div v-else class="col-span-2">
-                      <strong>Services: -----</strong>
                     </div>
 
                     <div><strong>Work Date:</strong> {{ item?.deadlineDate }}</div>
