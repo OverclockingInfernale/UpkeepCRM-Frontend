@@ -1,5 +1,6 @@
 <template>
 <div class="layout-sidebar">
+  <Menu :model="mainItems" class="layout-menu"/>
   <PanelMenu :model="items" class="layout-menu">
 
   </PanelMenu>
@@ -13,71 +14,66 @@ import {useRouter} from "vue-router"
 
 const router = useRouter()
 
-const items = ref([
+const mainItems= ref([
   {
-    label: "Main",
-    icon: 'pi pi-home',
-    expanded: true,
-    items: [
-
-      {
-        label: "Dashboard",
-        icon: PrimeIcons.CHART_BAR,
-        command: () => {
-          router.push('/about')
-        }
-      },
-      {
-        label: "ChatBot",
-        icon: PrimeIcons.TELEGRAM,
-        command: () => {
-          router.push('/chatbot')
-        }
-      },
-      {
-        label: "Orders",
-        icon: PrimeIcons.SORT,
-        command: () => {
-          router.push('/order')
-        }
-      },
-      {
-        label: "Schedule",
-        icon: PrimeIcons.CALENDAR,
-        command: () => {
-          router.push('/schedule')
-        }
-      },
-      {
-        label: "Services",
-        icon: PrimeIcons.LIST,
-        command: () => {
-          router.push('/services')
-        }
-      },
-      {
-        label: "Inventory",
-        icon: PrimeIcons.BOX,
-        command: () => {
-          router.push('/resources')
-        },
-      },
-      {
-        label: "Employees",
-        icon: PrimeIcons.ID_CARD,
-        command: () => {
-          router.push('/employees')
-        }
-      },
-      {
-        label: "Clients",
-        icon: "pi pi-users",
-        command: () => {
-          router.push('/clients')
-        }
-      }
-    ]
+    label: "Dashboard",
+    icon: PrimeIcons.CHART_BAR,
+    command: () => {
+      router.push('/about')
+    }
   },
+  {
+    label: "ChatBot",
+    icon: PrimeIcons.TELEGRAM,
+    command: () => {
+      router.push('/chatbot')
+    }
+  },
+  {
+    label: "Orders",
+    icon: PrimeIcons.SORT,
+    command: () => {
+      router.push('/order')
+    }
+  },
+  {
+    label: "Schedule",
+    icon: PrimeIcons.CALENDAR,
+    command: () => {
+      router.push('/schedule')
+    }
+  },
+  {
+    label: "Services",
+    icon: PrimeIcons.LIST,
+    command: () => {
+      router.push('/services')
+    }
+  },
+  {
+    label: "Inventory",
+    icon: PrimeIcons.BOX,
+    command: () => {
+      router.push('/resources')
+    },
+  },
+  {
+    label: "Employees",
+    icon: PrimeIcons.ID_CARD,
+    command: () => {
+      router.push('/employees')
+    }
+  },
+  {
+    label: "Clients",
+    icon: "pi pi-users",
+    command: () => {
+      router.push('/clients')
+    }
+  }
+])
+
+const items = ref([
   {
     label: "Dictionary",
     icon: PrimeIcons.BOOK,
