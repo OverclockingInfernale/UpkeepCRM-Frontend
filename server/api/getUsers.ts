@@ -1,4 +1,3 @@
-import { getServerSession } from '#auth'
 
 export default defineEventHandler(async (event) => {
     const response = await useApiFetch('/api/users', event, {

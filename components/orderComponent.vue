@@ -1,136 +1,181 @@
 <script setup>
-// import { ProductService } from '~/service/ProductService.vue';
 import { FilterMatchMode } from '@primevue/core/api';
 import { useToast } from 'primevue/usetoast';
 import { onMounted, ref } from 'vue';
 
 const toast = useToast();
 const dt = ref();
-const products = ref();
-const productDialog = ref(false);
-const deleteProductDialog = ref(false);
-const deleteProductsDialog = ref(false);
-const product = ref({});
-const selectedProducts = ref();
+const items = ref([]);
+const services = ref({})
+const resources = ref({})
+const serviceDialog = ref(false);
+const isEditMode = ref(false)
 const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS }
 });
+const submitted = ref(false);
+const resourceTypes = ref({});
 const loading = ref(true)
+const isHidden = ref(null)
+const subLoading = ref(true)
 
-onMounted(async() => {
+const fetchData = async() => {
+  items.value = Array.from({length: 10})
   loading.value = true
-  products.value = Array.from({length: 10})
-  const {data, error} = await useFetch('/api/getOrders')
-  console.log(data)
-  if(data?.value){
-    products.value = data.value.items;
-  }
-
-  if (error?.value){
-    console.log('Failed to fetch orders:', error.value)
+  try {
+    const {data} = await useFetch('/api/getOrders');
+    if (data?.value.items) {
+      items.value = data?.value.items
+    } else {
+      console.warn('No items in response');
+    }
+  } catch (error) {
+    toast.add({
+      severity: "error",
+      summary: "server error",
+      detail: "Failed to fetch orders",
+      life: 3000
+    })
+    console.error('Failed to fetch orders', error);
   }
   setTimeout(() => {
     loading.value = false
-  }, 1000)
-});
-
-const submitted = ref(false);
-const statuses = ref([
-  { label: 'INSTOCK', value: 'instock' },
-  { label: 'LOWSTOCK', value: 'lowstock' },
-  { label: 'OUTOFSTOCK', value: 'outofstock' }
-]);
-
-function formatCurrency(value) {
-  if (value) return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-  return;
+  }, 250)
 }
 
-function openNew() {
-  product.value = {};
+onMounted(() => {
+  fetchData()
+});
+
+
+function openNew() {        //Opens dialog for creation
+  isEditMode.value = false
+  resourceTypes.value = {};
   submitted.value = false;
-  productDialog.value = true;
+  serviceDialog.value = true;
 }
 
 function hideDialog() {
-  productDialog.value = false;
+  serviceDialog.value = false;
   submitted.value = false;
 }
 
-function saveProduct() {
+async function saveItem() {
   submitted.value = true;
+  if (resourceTypes?.value.name?.trim()) {
+    try {
+      const payload = {
+        ...(resourceTypes.value.id && {id: resourceTypes.value.id}),    //Conditional spread operator to define inclusion of id and preparing payload for put request
+        name: resourceTypes.value.name,
+        description: resourceTypes.value.description,
+      };
 
-  if (product?.value.name?.trim()) {
-    if (product.value.id) {
-      product.value.inventoryStatus = product.value.inventoryStatus.value ? product.value.inventoryStatus.value : product.value.inventoryStatus;
-      products.value[findIndexById(product.value.id)] = product.value;
-      toast.add({ severity: 'success', summary: 'Successful', detail: 'Product Updated', life: 3000 });
-    } else {
-      product.value.id = createId();
-      product.value.code = createId();
-      product.value.image = 'product-placeholder.svg';
-      product.value.inventoryStatus = product.value.inventoryStatus ? product.value.inventoryStatus.value : 'INSTOCK';
-      products.value.push(product.value);
-      toast.add({ severity: 'success', summary: 'Successful', detail: 'Product Created', life: 3000 });
+      await $fetch('/api/resourceTypes', {
+        method: resourceTypes.value.id ? 'PUT' :'POST',
+        body: payload
+      })
+
+      toast.add({
+        severity: "success",
+        ...(resourceTypes.value.id ? {
+              summary: "Updated",
+              detail: "Service successfully updated"
+            }
+            : {
+              summary: "Created",
+              detail: "Service successfully created"
+            }),
+        life: 3000
+      })
+
+    } catch (error){
+      toast.add({
+        severity: "error",
+        summary: "server error",
+        detail: "Service creation/update failed",
+        life: 3000
+      })
+      console.error('resourceTypes creation failed', error)
     }
 
-    productDialog.value = false;
-    product.value = {};
+    serviceDialog.value = false
+    await fetchData()
+    items.value = [...items.value, resourceTypes]
+    resourceTypes.value = {}
   }
 }
 
-function editProduct(prod) {
-  product.value = { ...prod };
-  productDialog.value = true;
-}
-
-function confirmDeleteProduct(prod) {
-  product.value = prod;
-  deleteProductDialog.value = true;
-}
-
-function deleteProduct() {
-  products.value = products.value.filter((val) => val.id !== product.value.id);
-  deleteProductDialog.value = false;
-  product.value = {};
-  toast.add({ severity: 'success', summary: 'Successful', detail: 'Product Deleted', life: 3000 });
-}
-
-function findIndexById(id) {
-  let index = -1;
-  for (let i = 0; i < products.value.length; i++) {
-    if (products.value[i].id === id) {
-      index = i;
-      break;
-    }
+async function fetchServicesAndResources(id){
+  subLoading.value = true
+  if(!id){
+    console.warn('Id is undefined in fetchServicesAndResources')
   }
-
-  return index;
+  try {
+    const [serviceData, resourceData] = await Promise.all([
+      $fetch('/api/order-service', {
+        method: 'GET',
+        params: {
+          orderId: id
+        }
+      }),
+      $fetch('api/order-resources', {
+        method: 'GET',
+        params: {
+          orderId: id
+        }
+      })
+    ])
+    services.value = serviceData
+    resources.value = resourceData
+  } catch (e){
+    console.error('Error fetching services-resources')
+  }
+  subLoading.value = false
+}
+const onRowClick = (event) => {    //opens dialog for edit
+  isEditMode.value = true
+  serviceDialog.value = true
+  editService(event.data)
 }
 
-function createId() {
-  let id = '';
-  var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for (var i = 0; i < 5; i++) {
-    id += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return id;
+function editService(item) {
+  resourceTypes.value = { ...item };
+  serviceDialog.value = true;
 }
 
 function exportCSV() {
   dt.value.exportCSV();
 }
 
-function confirmDeleteSelected() {
-  deleteProductsDialog.value = true;
+function toggleCard(index) {
+  isHidden.value = isHidden.value === index ? null : index
 }
 
-function deleteSelectedProducts() {
-  products.value = products.value.filter((val) => !selectedProducts.value.includes(val));
-  deleteProductsDialog.value = false;
-  selectedProducts.value = null;
-  toast.add({ severity: 'success', summary: 'Successful', detail: 'Products Deleted', life: 3000 });
+function handleClick(index, item){
+  if(!item?.id){
+    console.warn('No id in handleClick')
+  }
+
+  fetchServicesAndResources(item.id)
+  toggleCard(index)
 }
+
+function statusColor(statusId) {
+  switch (statusId) {
+    case 1:
+      return 'text-md bg-blue-100 text-blue-600'
+    case 2:
+      return 'text-md bg-yellow-100 text-yellow-500'
+    case 3:
+      return 'text-md bg-green-100 text-green-600'
+    case 4:
+      return 'text-md bg-red-100 text-red-600'
+    default:
+      return 'bg-gray-100 text-gray-500'
+  }
+}
+
+
 </script>
 
 <template>
@@ -139,7 +184,6 @@ function deleteSelectedProducts() {
       <Toolbar class="mb-6">
         <template #start>
           <Button label="New" icon="pi pi-plus" severity="secondary" class="mr-2" @click="openNew" />
-          <Button label="Delete" icon="pi pi-trash" severity="secondary" @click="confirmDeleteSelected" :disabled="!selectedProducts || !selectedProducts.length" />
         </template>
 
         <template #end>
@@ -147,21 +191,17 @@ function deleteSelectedProducts() {
         </template>
       </Toolbar>
 
-      <DataTable
-          ref="dt"
-          v-model:selection="selectedProducts"
-          :value="products"
-          dataKey="id"
+      <DataView
+          :value="items"
+          layout="list"
           :paginator="true"
           :rows="10"
-          :filters="filters"
-          paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
           :rowsPerPageOptions="[5, 10, 25]"
-          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} products"
+          currentPageReportTemplate="Showing {first} to {last} of {totalRecords} Orders "
       >
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
-            <h4 class="m-0">Manage Orders</h4>
+            <h4 class="m-0">Orders</h4>
             <IconField>
               <InputIcon>
                 <i class="pi pi-search" />
@@ -171,132 +211,83 @@ function deleteSelectedProducts() {
           </div>
         </template>
 
-        <Column field="name" header="Order Name" sortable>
-          <template #body="{data}">
-            <Skeleton v-if="loading" width="3rem" />
-            <span v-else>{{data.name}}</span>
-          </template>
-        </Column>
-        <Column field="client.name" header="Client" sortable>
-          <template #body="{data}">
-            <Skeleton v-if="loading" width="3rem" />
-            <span v-else>{{data.client.name}}</span>
-          </template>
-        </Column>
-        <Column field="totalCost" header="Total Cost" sortable>
-          <template #body="{data}">
-            <Skeleton v-if="loading" width="2rem" />
-            <span v-else>{{data.totalCost}}</span>
-          </template>
-        </Column>
-        <Column field="paymentMethod.name" header="Payment" sortable>
-          <template #body="{data}">
-            <Skeleton v-if="loading" width="2rem" />
-            <span v-else>{{data.paymentMethod.name}}</span>
-          </template>
-        </Column>
-        <Column field="status.name" header="Status" sortable>
-          <template #body="{data}">
-            <Skeleton v-if="loading" width="6rem" />
-            <span v-else>{{data.status.name}}</span>
-          </template>
-        </Column>
-        <Column field="deadlineDate" header="Deadline" sortable>
-          <template #body="{data}">
-            <Skeleton v-if="loading" width="6rem" />
-            <span v-else>{{data.deadlineDate}}</span>
-          </template>
-        </Column>
-        <Column field="assignedEmployee.name" header="Assigned To" sortable>
-          <template #body="{data}">
-            <Skeleton v-if="loading" width="6rem" />
-            <span v-else>{{data.assignedEmployee.name}}</span>
-          </template>
-        </Column>
+        <template #list="slotProps">
+          <div
+              v-for="(item, index) in slotProps.items"
+              :key="item?.id"
+              class="w-full"
+          >
+            <Card class="hover:bg-blue-50 mb-4 shadow-md cursor-pointer" @click="handleClick(index, item)">
+              <template #title>
+                <div class="flex justify-between items-center">
+                  <Skeleton v-if="loading" width="10rem" />
+                  <template v-else>
+                    <span class="font-bold text-lg">{{ item?.name }}</span>
+                    <span :class="statusColor(item?.status.id)">{{ item?.status?.name || 'No status'}}</span>
+                  </template>
+                </div>
+              </template>
 
-      </DataTable>
+              <template #content>
+                <div class="text-sm text-gray-500">
+                  {{ item?.client?.name || 'No client' }}
+                </div>
+
+                <div v-show="isHidden === index" class="mt-3 transition-all animate-duration-700 ease-in-out overflow-hidden">
+                  <!-- Expanded content -->
+                  <div class="grid grid-cols-2 gap-2">
+                    <div><strong>Status:</strong> {{ item?.status?.name }}</div>
+                    <div><strong>Phone:</strong> {{ item?.client?.phone || 'N/A' }}</div>
+
+                    <Skeleton v-if="loading" width="8rem" />
+                    <div v-else-if="services" class="col-span-2"><strong>Services:</strong>
+                      <ul class="list-disc list-inside">
+                        <li v-for="service in services" :key="service.id">{{ service.serviceName }}</li>
+                      </ul>
+                    </div>
+
+                    <Skeleton v-if="loading" width="8rem" />
+                    <div v-else-if="resources" class="col-span-2"><strong>Resources:</strong>
+                      <ul class="list-disc list-inside">
+                        <li v-for="resource in resources" :key="resource.id">{{ resource.resourceName }}</li>
+                      </ul>
+                    </div>
+
+                    <div><strong>Work Date:</strong> {{ item?.deadlineDate }}</div>
+                    <div><strong>Contractor:</strong> {{ item?.assignedEmployee?.name || 'N/A' }}</div>
+                    <div><strong>Price:</strong> {{ item?.totalCost }}₸</div>
+                  </div>
+                </div>
+              </template>
+            </Card>
+
+          </div>
+        </template>
+      </DataView>
+
     </div>
 
-    <Dialog v-model:visible="productDialog" :style="{ width: '450px' }" header="Product Details" :modal="true">
+    <Dialog v-model:visible="serviceDialog" :style="{ width: '450px' }" :header="isEditMode ? 'Edit Resource Type' : 'Create Resource Type'" :modal="true">
       <div class="flex flex-col gap-6">
-        <img v-if="product.image" :src="`https://primefaces.org/cdn/primevue/images/product/${product.image}`" :alt="product.image" class="block m-auto pb-4" />
+
         <div>
           <label for="name" class="block font-bold mb-3">Name</label>
-          <InputText id="name" v-model.trim="product.name" required="true" autofocus :invalid="submitted && !product.name" fluid />
-          <small v-if="submitted && !product.name" class="text-red-500">Name is required.</small>
+          <InputText id="name" v-model.trim="resourceTypes.name" required="true" autofocus :invalid="submitted && !resourceTypes.name" fluid />
+          <small v-if="submitted && !resourceTypes.name" class="text-red-500">Name is required.</small>
         </div>
+
         <div>
           <label for="description" class="block font-bold mb-3">Description</label>
-          <Textarea id="description" v-model="product.description" required="true" rows="3" cols="20" fluid />
-        </div>
-        <div>
-          <label for="inventoryStatus" class="block font-bold mb-3">Inventory Status</label>
-          <Select id="inventoryStatus" v-model="product.inventoryStatus" :options="statuses" optionLabel="label" placeholder="Select a Status" fluid></Select>
+          <Textarea id="description" v-model="resourceTypes.description" required="true" rows="3" cols="20" fluid />
         </div>
 
-        <div>
-          <span class="block font-bold mb-4">Category</span>
-          <div class="grid grid-cols-12 gap-4">
-            <div class="flex items-center gap-2 col-span-6">
-              <RadioButton id="category1" v-model="product.category" name="category" value="Accessories" />
-              <label for="category1">Accessories</label>
-            </div>
-            <div class="flex items-center gap-2 col-span-6">
-              <RadioButton id="category2" v-model="product.category" name="category" value="Clothing" />
-              <label for="category2">Clothing</label>
-            </div>
-            <div class="flex items-center gap-2 col-span-6">
-              <RadioButton id="category3" v-model="product.category" name="category" value="Electronics" />
-              <label for="category3">Electronics</label>
-            </div>
-            <div class="flex items-center gap-2 col-span-6">
-              <RadioButton id="category4" v-model="product.category" name="category" value="Fitness" />
-              <label for="category4">Fitness</label>
-            </div>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-12 gap-4">
-          <div class="col-span-6">
-            <label for="price" class="block font-bold mb-3">Price</label>
-            <InputNumber id="price" v-model="product.price" mode="currency" currency="USD" locale="en-US" fluid />
-          </div>
-          <div class="col-span-6">
-            <label for="quantity" class="block font-bold mb-3">Quantity</label>
-            <InputNumber id="quantity" v-model="product.quantity" integeronly fluid />
-          </div>
-        </div>
       </div>
 
       <template #footer>
         <Button label="Cancel" icon="pi pi-times" text @click="hideDialog" />
-        <Button label="Save" icon="pi pi-check" @click="saveProduct" />
+        <Button label="Save" icon="pi pi-check" @click="saveItem" />
       </template>
     </Dialog>
 
-    <Dialog v-model:visible="deleteProductDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
-      <div class="flex items-center gap-4">
-        <i class="pi pi-exclamation-triangle !text-3xl" />
-        <span v-if="product"
-        >Are you sure you want to delete <b>{{ product.name }}</b
-        >?</span
-        >
-      </div>
-      <template #footer>
-        <Button label="No" icon="pi pi-times" text @click="deleteProductDialog = false" />
-        <Button label="Yes" icon="pi pi-check" @click="deleteProduct" />
-      </template>
-    </Dialog>
-
-    <Dialog v-model:visible="deleteProductsDialog" :style="{ width: '450px' }" header="Confirm" :modal="true">
-      <div class="flex items-center gap-4">
-        <i class="pi pi-exclamation-triangle !text-3xl" />
-        <span v-if="product">Are you sure you want to delete the selected products?</span>
-      </div>
-      <template #footer>
-        <Button label="No" icon="pi pi-times" text @click="deleteProductsDialog = false" />
-        <Button label="Yes" icon="pi pi-check" text @click="deleteSelectedProducts" />
-      </template>
-    </Dialog>
   </div>
 </template>
