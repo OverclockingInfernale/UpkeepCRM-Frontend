@@ -8,6 +8,11 @@ const dt = ref();
 const items = ref([]);
 const services = ref({})
 const resources = ref({})
+const orders = ref({})
+const clients = ref([])
+const orderTypes = ref([])
+const orderStatuses = ref([])
+const orderPayment = ref([])
 const serviceDialog = ref(false);
 const isEditMode = ref(false)
 const filters = ref({
@@ -16,16 +21,17 @@ const filters = ref({
 const submitted = ref(false);
 const resourceTypes = ref({});
 const loading = ref(true)
-const isHidden = ref(null)
 const subLoading = ref(true)
+const collapsed = ref({})
+const initialFetch = ref(true)
+
 
 const fetchData = async() => {
-  items.value = Array.from({length: 10})
   loading.value = true
   try {
-    const {data} = await useFetch('/api/getOrders');
-    if (data?.value.items) {
-      items.value = data?.value.items
+    const data = await $fetch('/api/getOrders');
+    if (data) {
+      items.value = data?.items
     } else {
       console.warn('No items in response');
     }
@@ -38,8 +44,78 @@ const fetchData = async() => {
     })
     console.error('Failed to fetch orders', error);
   }
+
+  try {
+    const data = await $fetch('/api/clients');
+    if (data) {
+      clients.value = data?.items
+    } else {
+      console.warn('No items in response');
+    }
+  } catch (error) {
+    toast.add({
+      severity: "error",
+      summary: "server error",
+      detail: "Failed to fetch clients",
+      life: 3000
+    })
+    console.error('Failed to fetch clients', error);
+  }
+
+  try {
+    const data = await $fetch('/api/getOrderTypes');
+    if (data) {
+      orderTypes.value = data?.items
+    } else {
+      console.warn('No items in response');
+    }
+  } catch (error) {
+    toast.add({
+      severity: "error",
+      summary: "server error",
+      detail: "Failed to Order types",
+      life: 3000
+    })
+    console.error('Failed to fetch Order types', error);
+  }
+
+  try {
+    const data = await $fetch('/api/getOrderStatus');
+    if (data) {
+      orderStatuses.value = data?.items
+    } else {
+      console.warn('No items in response');
+    }
+  } catch (error) {
+    toast.add({
+      severity: "error",
+      summary: "server error",
+      detail: "Failed to Order statuses",
+      life: 3000
+    })
+    console.error('Failed to fetch Order statuses', error);
+  }
+
+  try {
+    const data = await $fetch('/api/getOrderPayment');
+    if (data) {
+      orderPayment.value = data?.items
+    } else {
+      console.warn('No items in response');
+    }
+  } catch (error) {
+    toast.add({
+      severity: "error",
+      summary: "server error",
+      detail: "Failed to Order statuses",
+      life: 3000
+    })
+    console.error('Failed to fetch Order statuses', error);
+  }
+
   setTimeout(() => {
     loading.value = false
+    initialFetch.value = false
   }, 250)
 }
 
@@ -62,16 +138,23 @@ function hideDialog() {
 
 async function saveItem() {
   submitted.value = true;
-  if (resourceTypes?.value.name?.trim()) {
+  if (orders?.value) {
+    console.log(orders.value)
     try {
       const payload = {
-        ...(resourceTypes.value.id && {id: resourceTypes.value.id}),    //Conditional spread operator to define inclusion of id and preparing payload for put request
-        name: resourceTypes.value.name,
-        description: resourceTypes.value.description,
+        name: orders.value.name,
+        clientId: orders.value.clientId,
+        typeId: orders.value.typeId,
+        statusId: orders.value.statusId,
+        paymentMethodId: orders.value.paymentMethodId,
+        discount: orders.value.discount,
+        deadlineDate: orders.value.deadlineDate.toISOString().split('T')[0],
+        paymentDueDate: orders.value.paymentDueDate.toISOString().split('T')[0],
+        notes: orders.value.notes
       };
 
-      await $fetch('/api/resourceTypes', {
-        method: resourceTypes.value.id ? 'PUT' :'POST',
+      await $fetch('/api/getOrders', {
+        method: isEditMode.value ? 'PUT' :'POST',
         body: payload
       })
 
@@ -79,11 +162,11 @@ async function saveItem() {
         severity: "success",
         ...(resourceTypes.value.id ? {
               summary: "Updated",
-              detail: "Service successfully updated"
+              detail: "Order successfully updated"
             }
             : {
               summary: "Created",
-              detail: "Service successfully created"
+              detail: "Order successfully created"
             }),
         life: 3000
       })
@@ -92,16 +175,16 @@ async function saveItem() {
       toast.add({
         severity: "error",
         summary: "server error",
-        detail: "Service creation/update failed",
+        detail: "Order creation/update failed",
         life: 3000
       })
-      console.error('resourceTypes creation failed', error)
+      console.error('Order creation failed', error)
     }
 
     serviceDialog.value = false
     await fetchData()
-    items.value = [...items.value, resourceTypes]
-    resourceTypes.value = {}
+    items.value = [...items.value, orders]
+    orders.value = {}
   }
 }
 
@@ -125,17 +208,12 @@ async function fetchServicesAndResources(id){
         }
       })
     ])
-    services.value = serviceData
-    resources.value = resourceData
+    services.value[id] = serviceData
+    resources.value[id] = resourceData
   } catch (e){
     console.error('Error fetching services-resources')
   }
   subLoading.value = false
-}
-const onRowClick = (event) => {    //opens dialog for edit
-  isEditMode.value = true
-  serviceDialog.value = true
-  editService(event.data)
 }
 
 function editService(item) {
@@ -147,17 +225,8 @@ function exportCSV() {
   dt.value.exportCSV();
 }
 
-function toggleCard(index) {
-  isHidden.value = isHidden.value === index ? null : index
-}
-
-function handleClick(index, item){
-  if(!item?.id){
-    console.warn('No id in handleClick')
-  }
-
-  fetchServicesAndResources(item.id)
-  toggleCard(index)
+async function handleClick(id){
+    await fetchServicesAndResources(id)
 }
 
 function statusColor(statusId) {
@@ -217,47 +286,52 @@ function statusColor(statusId) {
               :key="item?.id"
               class="w-full"
           >
-            <Card class="hover:bg-blue-50 mb-4 shadow-md cursor-pointer" @click="handleClick(index, item)">
+            <Card class="mb-4 shadow-md" >
               <template #title>
                 <div class="flex justify-between items-center">
-                  <Skeleton v-if="loading" width="10rem" />
+                  <Skeleton v-if="loading" width="16rem" />
                   <template v-else>
                     <span class="font-bold text-lg">{{ item?.name }}</span>
                     <span :class="statusColor(item?.status.id)">{{ item?.status?.name || 'No status'}}</span>
                   </template>
                 </div>
-              </template>
-
-              <template #content>
-                <div class="text-sm text-gray-500">
+                <Skeleton v-if="loading" width="6rem" />
+                <div v-else class="text-sm text-gray-500">
                   {{ item?.client?.name || 'No client' }}
                 </div>
+              </template>
 
-                <div v-show="isHidden === index" class="mt-3 transition-all animate-duration-700 ease-in-out overflow-hidden">
-                  <!-- Expanded content -->
-                  <div class="grid grid-cols-2 gap-2">
-                    <div><strong>Status:</strong> {{ item?.status?.name }}</div>
-                    <div><strong>Phone:</strong> {{ item?.client?.phone || 'N/A' }}</div>
+              <template #content v-if="items.length">
+                <Accordion
+                    :activeIndex="null"
+                    @tab-change="e => handleClick(item.id)"
+                    :multiple="false"
+                    toggleable
+                >
+                  <AccordionTab :header="'Show more'">
+                    <div class="mt-3">
+                      <div class="grid grid-cols-2 gap-2">
+                        <div><strong>Phone:</strong> {{ item?.client?.phone || 'N/A' }}</div>
 
-                    <Skeleton v-if="loading" width="8rem" />
-                    <div v-else-if="services" class="col-span-2"><strong>Services:</strong>
-                      <ul class="list-disc list-inside">
-                        <li v-for="service in services" :key="service.id">{{ service.serviceName }}</li>
-                      </ul>
+                        <div v-if="services[item?.id]" class="col-span-2"><strong>Services:</strong>
+                          <ul class="list-disc list-inside">
+                            <li v-for="service in services[item.id]" :key="service.id">{{ service.serviceName }}</li>
+                          </ul>
+                        </div>
+
+                        <div v-if="resources[item?.id]" class="col-span-2"><strong>Resources:</strong>
+                          <ul class="list-disc list-inside">
+                            <li v-for="resource in resources[item?.id]" :key="resource.id">{{ resource.resourceName }}</li>
+                          </ul>
+                        </div>
+
+                        <div><strong>Work Date:</strong> {{ item?.deadlineDate }}</div>
+                        <div><strong>Contractor:</strong> {{ item?.assignedEmployee?.name || 'N/A' }}</div>
+                        <div><strong>Price:</strong> {{ item?.totalCost }}₸</div>
+                      </div>
                     </div>
-
-                    <Skeleton v-if="loading" width="8rem" />
-                    <div v-else-if="resources" class="col-span-2"><strong>Resources:</strong>
-                      <ul class="list-disc list-inside">
-                        <li v-for="resource in resources" :key="resource.id">{{ resource.resourceName }}</li>
-                      </ul>
-                    </div>
-
-                    <div><strong>Work Date:</strong> {{ item?.deadlineDate }}</div>
-                    <div><strong>Contractor:</strong> {{ item?.assignedEmployee?.name || 'N/A' }}</div>
-                    <div><strong>Price:</strong> {{ item?.totalCost }}₸</div>
-                  </div>
-                </div>
+                  </AccordionTab>
+                </Accordion>
               </template>
             </Card>
 
@@ -272,13 +346,54 @@ function statusColor(statusId) {
 
         <div>
           <label for="name" class="block font-bold mb-3">Name</label>
-          <InputText id="name" v-model.trim="resourceTypes.name" required="true" autofocus :invalid="submitted && !resourceTypes.name" fluid />
-          <small v-if="submitted && !resourceTypes.name" class="text-red-500">Name is required.</small>
+          <InputText id="name" v-model.trim="orders.name" required="true" autofocus :invalid="submitted && !orders.name" fluid />
+          <small v-if="submitted && !orders.name" class="text-red-500">Name is required.</small>
+        </div>
+
+        <div class="grid grid-cols-12 gap-4">
+          <div class="col-span-6">
+            <label for="clients" class="block font-bold mb-3">Client</label>
+            <Select id="clients" v-model="orders.clientId" :options="clients" optionLabel="name" placeholder="Select a Type" />
+          </div>
+
+          <div class="col-start-8 col-span-4">
+            <label for="orderTypes" class="block font-bold mb-3">Order type</label>
+            <Select id="orderTypes" v-model="orders.typeId" :options="orderTypes" optionLabel="name" placeholder="Select a Type" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-4">
+          <div class="col-span-4">
+            <label for="orderStatuses" class="block font-bold mb-3">Status</label>
+            <Select id="orderStatuses" v-model="orders.statusId" :options="orderStatuses" optionLabel="name" placeholder="Select a Type" />
+          </div>
+
+          <div class="col-start-8 col-span-4">
+            <label for="paymentMethodId" class="block font-bold mb-3">Payment method</label>
+            <Select id="paymentMethodId" v-model="orders.paymentMethodId" :options="orderPayment" optionLabel="name" placeholder="Select a Type" />
+          </div>
+        </div>
+
+        <div class="col-span-6">
+          <label for="rate" class="block font-bold mb-3">Discount</label>
+          <InputNumber id="discount" type="number" v-model.number="orders.discount" autofocus locale="en-US" fluid  />
+        </div>
+
+        <div class="grid grid-cols-12 gap-4">
+          <div class="col-span-6">
+            <label for="date" class="block font-bold mb-3">Deadline date</label>
+            <DatePicker v-model="orders.deadlineDate" id="date" date-format="yy/mm/dd" :show-time="false" />
+          </div>
+
+          <div class="col-span-6">
+            <label for="date" class="block font-bold mb-3">Payment due:</label>
+            <DatePicker v-model="orders.paymentDueDate" id="PaymentDate" date-format="yy/mm/dd" :show-time="false"/>
+          </div>
         </div>
 
         <div>
-          <label for="description" class="block font-bold mb-3">Description</label>
-          <Textarea id="description" v-model="resourceTypes.description" required="true" rows="3" cols="20" fluid />
+          <label for="name" class="block font-bold mb-3">Notes</label>
+          <Textarea id="name" v-model.trim="orders.notes" required="true" autofocus fluid />
         </div>
 
       </div>

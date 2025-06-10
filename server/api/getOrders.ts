@@ -7,5 +7,16 @@ export default defineEventHandler(async (event) => {
             pageSize: 100
         }
     })
+
+    if(event.method === 'POST') {
+        const payload = await readBody(event)
+
+        const response = await useApiFetch('/api/orders', event, {
+            method: event.method,
+            body: payload
+        })
+        return response
+    }
+
     return response
 })
