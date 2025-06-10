@@ -1,57 +1,122 @@
-export default defineNitroPlugin(async () => {
-    console.log('Telegram polling plugin started')
-    // @ts-ignore
-    if (process.dev && globalThis.__telegramPollingStarted) return;
-    // @ts-ignore
-    globalThis.__telegramPollingStarted = true;
-
-    const botToken = process.env.VITE_TELEGRAM_BOT_TOKEN;
-    if (!botToken) return console.warn('Missing TELEGRAM_BOT_TOKEN');
-
-    const messages = useStorage('telegram:messages');
-    const state = useStorage('telegram:state');
-
-    let offset = await state.getItem('offset') || 0;
-
-    async function pollTelegram() {
-        let res
-        try {
-             res = await $fetch(`https://api.telegram.org/bot${botToken}/getUpdates`, {
-                params: { offset, timeout: 30 },
-            });
-
-            // @ts-ignore
-            const updates = res?.result || [];
-            for (const update of updates) {
-                offset = update.update_id + 1;
-                await state.setItem('offset', offset);
-                const msg = update.message;
-                const chat = msg?.chat
-                const chatId = chat?.id;
-                const message = msg?.text;
-                const isFromBot = msg?.from?.is_bot
-
-                if (!chatId || !message) continue;
-
-                await messages.setItem(`${update.update_id}`, {
-                    chatId,
-                    message,
-                    time: Date.now(),
-                    fromMe: isFromBot === true,
-                    name: chat?.username || `${chat?.first_name || 'user'} ${chat?.lastname || 'name'}`.trim(),
-                });
-            }
-        } catch (e) {
-            console.error('Polling error:', e);
-        } finally {
-            // @ts-ignore
-            if (res?.result?.length) {
-                setImmediate(pollTelegram);
-            } else {
-                setTimeout(pollTelegram, 3000);
-            }
-        }
+// server/plugins/telegramPolling.ts
+export default defineNitroPlugin((nitroApp) => {
+    // State management
+    const state = {
+        isPolling: false,
+        isInitialized: false,
+        botToken: process.env.VITE_TELEGRAM_BOT_TOKEN,
+        abortController: null as AbortController | null,
+        pollingInterval: 3000, // Default interval
     }
 
-    pollTelegram();
-});
+    // Storage setup
+    const messages = useStorage('telegram:messages')
+    const pollState = useStorage('telegram:state')
+
+    // Core polling function
+    async function startPolling() {
+        if (!state.botToken) {
+            console.error('Missing TELEGRAM_BOT_TOKEN')
+            return
+        }
+
+        if (state.isPolling) {
+            console.warn('Polling already running')
+            return
+        }
+
+        state.isPolling = true
+        state.abortController = new AbortController()
+        let offset = (await pollState.getItem('offset')) || 0
+
+        console.log('Starting Telegram polling...')
+
+        const poll = async () => {
+            if (state.abortController?.signal.aborted) return
+
+            try {
+                const res = await $fetch(`https://api.telegram.org/bot${state.botToken}/getUpdates`, {
+                    params: { offset, timeout: 30 },
+                    signal: state.abortController?.signal
+                })
+
+                // @ts-ignore - Telegram API response type
+                const updates = res?.result || []
+
+                for (const update of updates) {
+                    offset = update.update_id + 1
+                    await pollState.setItem('offset', offset)
+
+                    const msg = update.message
+                    if (!msg?.chat?.id || !msg.text) continue
+
+                    await messages.setItem(`${update.update_id}`, {
+                        chatId: msg.chat.id,
+                        message: msg.text,
+                        time: Date.now(),
+                        fromMe: msg.from?.is_bot === true,
+                        name: msg.chat.username ||
+                            `${msg.chat.first_name || ''} ${msg.chat.last_name || ''}`.trim() || 'Unknown',
+                    })
+                }
+
+                // Immediate next poll if we got updates
+                if (updates.length > 0) {
+                    setImmediate(poll)
+                } else {
+                    setTimeout(poll, state.pollingInterval)
+                }
+            } catch (err) {
+                // @ts-ignore
+                if (err.name !== 'AbortError') {
+                    console.error('Polling error:', err)
+                    setTimeout(poll, state.pollingInterval * 2) // Backoff on error
+                }
+            }
+        }
+
+        poll()
+    }
+
+    function stopPolling() {
+        if (!state.isPolling) return
+
+        console.log('Stopping Telegram polling...')
+        state.abortController?.abort()
+        state.isPolling = false
+    }
+
+    // API endpoints
+    nitroApp.router.use('/api/telegram-polling', defineEventHandler(async (event) => {
+        const { action, interval } = getQuery(event)
+
+        switch (action) {
+            case 'start':
+                if (interval) state.pollingInterval = parseInt(interval as string) || 3000
+                await startPolling()
+                return { status: 'started' }
+
+            case 'stop':
+                stopPolling()
+                return { status: 'stopped' }
+
+            case 'status':
+                return {
+                    status: state.isPolling ? 'active' : 'inactive',
+                    lastOffset: await pollState.getItem('offset'),
+                    interval: state.pollingInterval
+                }
+
+            default:
+                throw createError({
+                    statusCode: 400,
+                    message: 'Invalid action. Use "start", "stop", or "status"'
+                })
+        }
+    }))
+
+    // Auto-cleanup on server shutdown
+    nitroApp.hooks.hookOnce('close', () => {
+        stopPolling()
+    })
+})

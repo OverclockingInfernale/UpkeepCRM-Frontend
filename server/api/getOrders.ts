@@ -4,7 +4,7 @@ export default defineEventHandler(async (event) => {
     const response = await useApiFetch('/api/orders', event, {
         params: {
             page: 1,
-            pageSize: 100
+            pageSize: 500
         }
     })
 

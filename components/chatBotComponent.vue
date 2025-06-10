@@ -1,12 +1,13 @@
 <script setup>
 import { ref, computed, nextTick } from 'vue';
 const { data: messagesRaw, refresh } = await useFetch('/api/getTelegramMessages');
+const {data: startup} = await useFetch('/api/telegram-polling?action=start&interval=5000')
 const sending = ref({});
 const newMessages = ref({});
 const selectedChatId = ref(null);
 
 onMounted(() => {
-  const interval = setInterval(() => refresh(), 5000);
+  const interval = setInterval(() => refresh(), 2000);
   onUnmounted(() => clearInterval(interval));
 });
 
