@@ -1,7 +1,8 @@
-<script>
+<script setup>
+import ChatBotComponent from "~/components/chatBotComponent.vue";
 
 </script>
 
 <template>
-  <p>chatbot goes here</p>
+  <chat-bot-component/>
 </template>

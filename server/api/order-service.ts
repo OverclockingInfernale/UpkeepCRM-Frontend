@@ -1,13 +1,28 @@
+import {useApiFetch} from "~/server/utils/useApiFetch";
 
 export default defineEventHandler(async (event) => {
-    const query = getQuery(event)
-    const thisId = query.orderId
-    const response = await useApiFetch('/api/order-services', event, {
-        method: 'GET',
-        params: {
-            orderId: thisId
-        }
-    })
-    return response
+    if(event.method === 'GET') {
+        const query = getQuery(event)
+        const thisId = query.orderId
+        const response = await useApiFetch('/api/order-services', event, {
+            method: 'GET',
+            params: {
+                orderId: thisId
+            }
+        })
 
+        return response
+    }
+
+    if(event.method === 'POST') {
+        const payload = await readBody(event)
+
+        const response = await useApiFetch('/api/order-services', event, {
+            method: event.method,
+            body: payload
+        })
+        return response
+    }
+
+    return {message: 'Bad method'}
 })
