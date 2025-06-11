@@ -17,11 +17,29 @@ const submitted = ref(false);
 const serviceTypes = ref([]);
 const loading = ref(true)
 
-onMounted( async () => {
+
+const fetchData = async() => {
+  products.value = Array.from({length: 10})
+  loading.value = true
   try {
-    const {data} = await useFetch('/api/serviceCategories');
-    if (data?.value.items) {
-      serviceTypes.value = data?.value.items
+    const data = await $fetch('/api/services')
+    if (data?.items) {
+      products.value = data?.items;
+    }
+  } catch (error){
+    toast.add({
+      severity: "error",
+      summary: "server error",
+      detail: "Failed to fetch service categories",
+      life: 3000
+    })
+    console.error('Failed to fetch service categories', error);
+  }
+
+  try {
+    const data = await $fetch('/api/serviceCategories');
+    if (data?.items) {
+      serviceTypes.value = data?.items
     } else {
       console.warn('No items in response');
     }
@@ -34,24 +52,7 @@ onMounted( async () => {
     })
     console.error('Failed to fetch service categories', error);
   }
-});
-const fetchData = async() => {
-  products.value = Array.from({length: 10})
-  loading.value = true
-  const {data, error} = await useFetch('/api/services')
-  if(data?.value){
-    products.value = data.value.items;
-  }
 
-  if (error?.value){
-    toast.add({
-      severity: "error",
-      summary: "server error",
-      detail: "Failed to fetch services",
-      life: 3000
-    })
-    console.log('Failed to fetch services:', error.value)
-  }
   setTimeout(() => {
     loading.value = false
   }, 250)

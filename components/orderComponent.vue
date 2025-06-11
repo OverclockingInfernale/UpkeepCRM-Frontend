@@ -17,6 +17,7 @@ const orderTypes = ref([])
 const orderStatuses = ref([])
 const orderPayment = ref([])
 const serviceDialog = ref(false);
+const confirmationDialog = ref(false)
 const isEditMode = ref(false)
 const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS }
@@ -30,6 +31,11 @@ const lazyParams = ref({
   first: 0,
   rows: 10,
 });
+const selectedOrder = ref(null)
+const isCancelTriggered = ref(false)
+const dialogActionType = ref(null) // accept, complete, cancel for status change
+
+
 
 const fetchData = async() => {
   loading.value = true
@@ -198,7 +204,7 @@ onMounted(() => {
 
 function openNew() {        //Opens dialog for creation
   isEditMode.value = false
-  resourceTypes.value = {};
+  orders.value = {};
   submitted.value = false;
   serviceDialog.value = true;
 }
@@ -221,7 +227,6 @@ async function saveItem() {
         statusId: 1,
         discount: orders.value.discount || 0,
         deadlineDate: orders.value.deadlineDate.toISOString().split('T')[0],
-        // paymentDueDate: orders.value.paymentDueDate.toISOString().split('T')[0],
         notes: orders.value.notes || null
       };
 
@@ -279,8 +284,26 @@ async function saveItem() {
 
     serviceDialog.value = false
     await fetchData()
-    items.value = [...items.value, orders]
+    // items.value = [...items.value, orders]
     orders.value = {}
+  }
+}
+
+async function editItem(){
+  if(orders.value){
+    const payload = {
+      orderId: orders.value.id,
+      name: orders.value.name,
+      assignedEmployeeId: orders.value.employee?.id,
+      typeId: orders.value.type?.id,
+      statusId: orders.value.status?.id,
+      isPaid: orders.value.isPaid,
+      discount: orders.value.discount,
+      paymentMethodId: orders.value.paymentMethod?.id,
+      paymentDueDate: orders.value.paymentDue,
+      notes: orders.value.notes
+
+    }
   }
 }
 
@@ -312,8 +335,16 @@ async function fetchServicesAndResources(id){
   subLoading.value = false
 }
 
-function editService(item) {
-  resourceTypes.value = { ...item };
+function editOrder(item) {
+  isEditMode.value = true
+  console.log(item)
+  orders.value = { ...item };
+  orders.value.client = clients.value.find(c => c.id === item.client?.id) || null;
+  orders.value.status = orderStatuses.value.find(s => s.id === item.status?.id) || null;
+  orders.value.paymentMethod = orderPayment.value.find(p => p.id === item.paymentMethod?.id) || null;
+  orders.value.employee = employees.value.find(e => e.id === item.assignedEmployee?.id) || null;
+  orders.value.type = orderTypes.value.find(t => t.id === item.type?.id) || null;
+  console.log('spread separator: ',orders.value)
   serviceDialog.value = true;
 }
 
@@ -338,6 +369,81 @@ function statusColor(statusId) {
     default:
       return 'primary'
   }
+}
+
+function confirmStatusChange(order, action){
+  selectedOrder.value = order
+  dialogActionType.value = action
+  confirmationDialog.value = true
+}
+
+const dialogHeader = computed(() => {
+  if (dialogActionType.value === 'cancel') return 'Cancel Order?'
+  if (selectedOrder.value?.status?.id === 1) return 'Accept Order?'
+  if (selectedOrder.value?.status?.id === 2) return 'Complete Order?'
+  return 'Do action?'
+})
+
+const yesButtonClass = computed(() => {
+  if (dialogActionType.value === 'cancel') return 'p-button-danger'
+  if (selectedOrder.value?.status?.id === 1) return 'p-button-success'
+  if (selectedOrder.value?.status?.id === 2) return 'p-button-warning'
+  return ''
+})
+
+const noButtonClass = computed(() => {
+  if (isCancelTriggered.value) return 'p-button-secondary'
+  return 'p-button-outlined'
+})
+
+async function changeStatus(){
+  const orderId = selectedOrder.value?.id
+  let updatePayload = {}
+
+  switch (dialogActionType.value) {
+    case 'accept':
+      updatePayload = { statusId: 2 }
+      break
+    case 'complete':
+      updatePayload = { statusId: 3 }
+      break
+    case 'cancel':
+      updatePayload = { statusId: 4 }
+      break
+  }
+
+  if (selectedOrder.value) {
+    selectedOrder.value.status = { id: updatePayload.statusId }
+  }
+
+  console.log(selectedOrder.value)
+
+  try{
+    // await $fetch('/api/getOrders', {
+    //   method: 'PUT',
+    //   body: updatePayload,
+    //   query: {
+    //     orderId: orderId
+    //   }
+    // })
+
+    toast.add({
+      severity: "success",
+      summary: "Success",
+      detail: "Status has been changed",
+      life: 3000
+    })
+  } catch (error){
+    toast.add({
+      severity: "error",
+      summary: "Server error",
+      detail: "Failed to change status",
+      life: 3000
+    })
+    console.log(error)
+  }
+  confirmationDialog.value = false
+  await fetchData()
 }
 
 </script>
@@ -389,7 +495,10 @@ function statusColor(statusId) {
                   <Skeleton v-if="loading" width="16rem" />
                   <template v-else>
                     <span class="font-bold text-lg">{{ item?.name }}</span>
-                    <Button label="status" :severity="statusColor(item?.status?.id)" raised>{{item?.status?.name || 'No status'}}</Button>
+                    <div>
+                      <Tag class="text-lg" label="status" :severity="statusColor(item?.status?.id)" raised>{{item?.status?.name || 'No status'}}</Tag>
+                      <Button @click="editOrder(item)" icon="pi pi-pen-to-square" variant="outlined" class="mx-2" severity="contrast"></Button>
+                    </div>
                   </template>
                 </div>
                 <Skeleton v-if="loading" width="6rem" />
@@ -407,7 +516,7 @@ function statusColor(statusId) {
                 >
                   <AccordionTab :header="'Details...'">
                     <div class="mt-3">
-                      <div class="grid grid-cols-2 gap-2">
+                      <div class="grid gap-2">
                         <div><strong>Phone:</strong> {{ item?.client?.phone || 'N/A' }}</div>
 
                         <div v-if="services[item?.id]" class="col-span-2"><strong>Services:</strong>
@@ -423,11 +532,14 @@ function statusColor(statusId) {
                         </div>
 
                         <div><strong>Work Date:</strong> {{ item?.deadlineDate }}</div>
-                        <div><strong>Contractor:</strong> {{ item?.assignedEmployee?.name || 'N/A' }}</div>
-                        <div><strong>Price:</strong> {{ item?.totalCost }}₸</div>
+                        <div class="col-start-1"><strong>Contractor:</strong> {{ item?.assignedEmployee?.name || 'N/A' }}</div>
+                        <div class="col-start-1"><strong>Price:</strong> {{ item?.totalCost }}₸</div>
                       </div>
 
                     </div>
+                    <Button @click="confirmStatusChange(item, 'cancel')" v-if="item?.status?.id === 2 || item?.status?.id === 1" class="my-4 me-3" variant="outlined" severity="danger">Cancel</Button>
+                    <Button @click="confirmStatusChange(item, 'accept')" v-if="item?.status?.id === 1" class="my-4 me-3" severity="info">Accept</Button>
+                    <Button @click="confirmStatusChange(item, 'complete')" v-if="item?.status?.id === 2" class="my-4 me-3" severity="success">Complete</Button>
                   </AccordionTab>
                 </Accordion>
               </template>
@@ -449,57 +561,57 @@ function statusColor(statusId) {
         </div>
 
         <div class="grid grid-cols-12 gap-1">
-          <div class="col-span-6">
+          <div class="col-span-5">
             <label for="clients" class="block font-bold mb-3">Client</label>
-            <Select id="clients" v-model="orders.client" :options="clients" optionLabel="name" placeholder="Select a Type" />
+            <Select fluid id="clients" v-model="orders.client" :options="clients" optionLabel="name" placeholder="Select a Type" />
           </div>
 
-          <div class="col-start-8 col-span-6">
+          <div class="col-start-7 col-span-6">
             <label for="orderTypes" class="block font-bold mb-3">Order type</label>
-            <Select id="orderTypes" v-model="orders.type" :options="orderTypes" optionLabel="name" placeholder="Select a Type" />
+            <Select fluid id="orderTypes" v-model="orders.type" :options="orderTypes" optionLabel="name" placeholder="Select a Type" />
           </div>
         </div>
 
         <div class="grid grid-cols-12 gap-4">
-          <div class="col-span-6">
-            <label for="rate" class="block font-bold mb-3">Discount</label>
-            <InputNumber
-                id="discount"
-                type="number"
-                v-model.number="orders.discount"
-                autofocus
-                locale="en-US"
-                :min="0"
-                :max="1"
-                :step="0.05"
-                mode="decimal"
-                fluid
-                show-buttons
-                button-layout="horizontal"
-            />
+<!--          <div class="col-span-6">-->
+<!--            <label for="rate" class="block font-bold mb-3">Discount</label>-->
+<!--            <InputNumber-->
+<!--                id="discount"-->
+<!--                type="number"-->
+<!--                v-model.number="orders.discount"-->
+<!--                autofocus-->
+<!--                locale="en-US"-->
+<!--                :min="0"-->
+<!--                :max="1"-->
+<!--                :step="0.05"-->
+<!--                mode="decimal"-->
+<!--                fluid-->
+<!--                show-buttons-->
+<!--                button-layout="horizontal"-->
+<!--            />-->
+<!--          </div>-->
+
+          <div class="">
+            <label for="executor" class="block font-bold mb-3">Executor</label>
+            <Select id="employee" v-model="orders.employee" :options="employees" optionLabel="name" placeholder="Select an executor" />
           </div>
 
-          <div class="col-start-8 col-span-6">
+          <div class="col-start-7 col-span-6">
             <label for="date" class="block font-bold mb-3">Deadline date</label>
             <DatePicker v-model="orders.deadlineDate" id="date" date-format="yy/mm/dd" :show-time="false" />
           </div>
         </div>
 
         <div class="grid grid-cols-12">
-          <div class="col-span-6">
+          <div class="col-span-5">
             <label for="orderStatuses" class="block font-bold mb-3">Resources</label>
-            <Select id="orderStatuses" v-model="orders.service" :options="orderServices" optionLabel="name" placeholder="Select" />
+            <Select fluid id="orderStatuses" v-model="orders.service" :options="orderServices" optionLabel="name" placeholder="Select" />
           </div>
 
-          <div class="col-start-8 col-span-6">
+          <div class="col-start-7 col-span-6">
             <label for="paymentMethodId" class="block font-bold mb-3">Services</label>
-            <Select id="paymentMethodId" v-model="orders.resource" :options="orderResources" optionLabel="name" placeholder="Select" />
+            <Select fluid id="paymentMethodId" v-model="orders.resource" :options="orderResources" optionLabel="name" placeholder="Select" />
           </div>
-        </div>
-
-        <div class="">
-          <label for="executor" class="block font-bold mb-3">Executor</label>
-          <Select id="employee" v-model="orders.employee" :options="employees" optionLabel="name" placeholder="Select an executor" />
         </div>
 
         <div>
@@ -513,6 +625,21 @@ function statusColor(statusId) {
         <Button label="Cancel" severity="danger" icon="pi pi-times" text @click="hideDialog" />
         <Button label="Save" severity="success" icon="pi pi-check" @click="saveItem" />
       </template>
+    </Dialog>
+
+    <Dialog :style="{width: '300px'}" v-model:visible="confirmationDialog" :modal="true" :header="dialogHeader">
+      <div class="flex justify-content-end gap-2">
+        <Button
+            :label="isCancelTriggered ? 'Yes, Cancel' : 'Yes'"
+            :class="yesButtonClass"
+            @click="changeStatus"
+        />
+        <Button
+            label="No"
+            :class="noButtonClass"
+            @click="confirmationDialog = false"
+        />
+      </div>
     </Dialog>
 
   </div>
