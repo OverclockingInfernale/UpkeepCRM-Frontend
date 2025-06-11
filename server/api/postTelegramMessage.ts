@@ -2,7 +2,7 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event);
     const { chatId, text } = body;
 
-    const botToken = process.env.VITE_TELEGRAM_BOT_TOKEN;
+    const botToken = '8111705395:AAFWjIEHS3eXnaxS4D2AK7Dj6pOvIzg4EjE';
     if (!botToken || !chatId || !text) return { error: 'Missing data' };
 
     await $fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {

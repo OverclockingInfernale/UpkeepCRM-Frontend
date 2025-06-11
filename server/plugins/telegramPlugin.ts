@@ -4,7 +4,7 @@ export default defineNitroPlugin((nitroApp) => {
     const state = {
         isPolling: false,
         isInitialized: false,
-        botToken: process.env.VITE_TELEGRAM_BOT_TOKEN,
+        botToken: '8111705395:AAFWjIEHS3eXnaxS4D2AK7Dj6pOvIzg4EjE',
         abortController: null as AbortController | null,
         pollingInterval: 3000, // Default interval
     }
