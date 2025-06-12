@@ -125,7 +125,6 @@ async function saveResource() {
 
     serviceDialog.value = false
     await fetchData()
-    products.value = [...products.value, services]
     services.value = {}
   }
 }
@@ -169,7 +168,8 @@ function exportCSV() {
           :rowsPerPageOptions="[5, 10, 25]"
           currentPageReportTemplate="Showing {first} to {last} of {totalRecords} services"
           @row-click="onRowClick"
-          :row-class="() => 'hover:bg-blue-50 cursor-pointer'"
+          :row-hover="true"
+          :row-class="() => 'cursor-pointer '"
           auto-layout=auto-layout
       >
         <template #header>

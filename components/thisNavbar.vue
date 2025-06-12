@@ -33,6 +33,7 @@ const handleLogout = async () => {
     </div>
     <div class="layout-topbar-actions">
       <div class="layout-config-menu">
+
         <button type="button" class="layout-topbar-action" @click="toggleDarkMode">
           <i :class="['pi', { 'pi-moon': isDarkTheme, 'pi-sun': !isDarkTheme }]"></i>
         </button>
@@ -44,14 +45,10 @@ const handleLogout = async () => {
       >
         <i class="pi pi-ellipsis-v"></i>
       </button>
+      <span class="text-center">{{username}}</span>
 
       <div class="layout-topbar-menu hidden lg:block">
         <div class="layout-topbar-menu-content">
-          <span>{{username}}</span>
-          <button type="button" class="layout-topbar-action">
-            <i class="pi pi-user"></i>
-            <span>Profile</span>
-          </button>
           <button @click="handleLogout" type="button" class="layout-topbar-action">
             <i class="pi pi-sign-out"></i>
             <span>Log out</span>

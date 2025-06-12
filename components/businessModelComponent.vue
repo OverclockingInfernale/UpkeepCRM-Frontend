@@ -71,8 +71,8 @@ function exportCSV() {
           paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
           :rowsPerPageOptions="[5, 10, 25]"
           currentPageReportTemplate="Showing {first} to {last} of {totalRecords} resource Types"
-          :row-class="() => 'hover:bg-blue-50 cursor-pointer'"
-      >
+          :row-hover="true"
+          :row-class="() => 'cursor-pointer '"      >
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
             <h4 class="m-0">Business model</h4>

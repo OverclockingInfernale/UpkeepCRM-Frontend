@@ -20,9 +20,9 @@ const fetchData = async() => {
   loading.value = true
 
   try {
-    const {data} = await useFetch('/api/measurementUnits');
-    if (data?.value.items) {
-      items.value = data?.value.items
+    const data = await $fetch('/api/measurementUnits');
+    if (data) {
+      items.value = data?.items
     } else {
       console.warn('No items in response');
     }
@@ -97,7 +97,6 @@ async function saveItem() {
 
     serviceDialog.value = false
     await fetchData()
-    items.value = [...items.value, unitTypes]
     unitTypes.value = {}
   }
 }
@@ -141,8 +140,8 @@ function exportCSV() {
           :rowsPerPageOptions="[5, 10, 25]"
           currentPageReportTemplate="Showing {first} to {last} of {totalRecords} Measurement Units"
           @row-click="onRowClick"
-          :row-class="() => 'hover:bg-blue-50 cursor-pointer'"
-      >
+          :row-hover="true"
+          :row-class="() => 'cursor-pointer '"  >
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
             <h4 class="m-0">Manage Measurement Units</h4>
