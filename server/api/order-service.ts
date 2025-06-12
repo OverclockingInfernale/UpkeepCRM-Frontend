@@ -24,5 +24,16 @@ export default defineEventHandler(async (event) => {
         return response
     }
 
+    if(event.method === 'PUT') {
+        const payload = await readBody(event)
+        const query = getQuery(event)
+
+        const response = await useApiFetch(`/api/order-services/${query.id}`, event, {
+            method: event.method,
+            body: payload
+        })
+        return response
+    }
+
     return {message: 'Bad method'}
 })

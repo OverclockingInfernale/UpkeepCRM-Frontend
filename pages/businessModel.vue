@@ -3,5 +3,5 @@
 </script>
 
 <template>
-  <schedule-component/>
+  <business-model-component/>
 </template>

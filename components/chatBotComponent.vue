@@ -8,7 +8,10 @@ const selectedChatId = ref(null);
 
 onMounted(() => {
   const interval = setInterval(() => refresh(), 2000);
-  onUnmounted(() => clearInterval(interval));
+  onUnmounted(() => {
+    clearInterval(interval)
+    $fetch('/api/telegram-polling?action=stop')
+  });
 });
 
 const chatNames = computed(() => {
@@ -59,28 +62,21 @@ const sendMessage = async (chatId) => {
 </script>
 
 <template>
-  <div class="flex h-screen">
+  <div class="flex h-170">
     <!-- Sidebar -->
-    <div class="w-64 border">
-      <div class="p-4 text-xl font-semibold text-primary">💬 Chats</div>
-      <ul>
-        <li
-            v-for="chatId in Object.keys(chats)"
-            :key="chatId"
-            @click="selectChat(chatId)"
-            :class="[
-            'cursor-pointer px-4 py-3 border-b border-surface-200 dark:border-surface-700 hover:bg-surface-200 app-dark:hover:bg-surface-800 transition-colors',
-            selectedChatId === chatId ? 'bg-primary text-white' : 'text-color'
-          ]"
-        >
-          {{ chatNames[chatId] || chatId }}
-        </li>
-      </ul>
-    </div>
+    <Panel header="Chats" class="w-64 h-full border shadow">
+      <Listbox
+          v-model="selectedChatId"
+          :options="Object.keys(chats)"
+          :optionLabel="id => chatNames[id] || id"
+          class="w-full"
+          @change="e => selectChat(e.value)"
+      />
+  </Panel>
 
     <!-- Chat Panel -->
     <div class="flex-1 flex flex-col">
-      <ScrollPanel class="flex-1 p-4 overflow-y-auto" style="flex-direction: column-reverse;">
+      <div class="flex-1 p-4 overflow-y-auto" style="flex-direction: column-reverse;">
         <div class="flex flex-col-reverse gap-3">
           <div
               v-for="msg in selectedChatMessages"
@@ -102,7 +98,7 @@ const sendMessage = async (chatId) => {
             </Card>
           </div>
         </div>
-      </ScrollPanel>
+      </div>
 
       <!-- Input Area -->
       <div v-if="selectedChatId" class="p-4 border-t border-surface-200 flex gap-2 items-center bg-surface-0">
