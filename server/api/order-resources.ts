@@ -15,9 +15,18 @@ export default defineEventHandler(async (event) => {
 
     if(event.method === 'POST') {
         const payload = await readBody(event)
-        console.log(payload)
 
         const response = await useApiFetch('/api/order-resources', event, {
+            method: event.method,
+            body: payload
+        })
+        return response
+    }
+    if(event.method === 'PUT') {
+        const payload = await readBody(event)
+        const query = getQuery(event)
+
+        const response = await useApiFetch(`/api/order-resources/${query.id}`, event, {
             method: event.method,
             body: payload
         })

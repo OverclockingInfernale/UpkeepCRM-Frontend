@@ -18,6 +18,7 @@ const orderStatuses = ref([])
 const orderPayment = ref([])
 const serviceDialog = ref(false);
 const confirmationDialog = ref(false)
+const completionDialog = ref(false)
 const isEditMode = ref(false)
 const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS }
@@ -211,13 +212,13 @@ function openNew() {        //Opens dialog for creation
 
 function hideDialog() {
   serviceDialog.value = false;
+  completionDialog.value = false;
   submitted.value = false;
 }
 
 async function saveItem() {
   submitted.value = true;
-  if (orders?.value) {
-    console.log(orders.value)
+  if (orders?.value && !isEditMode) {
     try {
       const payload = {
         name: orders.value.name,
@@ -230,9 +231,8 @@ async function saveItem() {
         notes: orders.value.notes || null
       };
 
-      console.log(payload)
       const response = await $fetch('/api/getOrders', {
-        method: isEditMode.value ? 'PUT' :'POST',
+        method: 'POST',
         body: payload
       })
 
@@ -247,8 +247,6 @@ async function saveItem() {
         quantity: orders.value.resource?.currentQuantity
       }
 
-      console.log(AnotherPayload)
-
       await $fetch('/api/order-service', {
         method: 'POST',
         body: AdditionalPayload
@@ -261,14 +259,8 @@ async function saveItem() {
 
       toast.add({
         severity: "success",
-        ...(resourceTypes.value.id ? {
-              summary: "Updated",
-              detail: "Order successfully updated"
-            }
-            : {
-              summary: "Created",
-              detail: "Order successfully created"
-            }),
+        summary: "Created",
+        detail: "Order successfully created",
         life: 3000
       })
 
@@ -281,12 +273,75 @@ async function saveItem() {
       })
       console.error('Order creation failed', error)
     }
-
-    serviceDialog.value = false
-    await fetchData()
-    // items.value = [...items.value, orders]
-    orders.value = {}
   }
+  if (orders?.value && isEditMode) {
+    try {
+      const payload = {
+        orderId: orders.value.id,
+        name: orders.value.name,
+        clientId: orders.value.client?.id,
+        assignedEmployeeId: orders.value.employee?.id,
+        typeId: orders.value.type?.id,
+        statusId: orders.value.status?.id,
+        discount: orders.value.discount || 0,
+        deadlineDate: orders.value.deadlineDate.toISOString().split('T')[0],
+        notes: orders.value.notes || null
+      };
+
+      await $fetch('/api/getOrders', {
+        method: 'PUT',
+        body: payload,
+        query: {
+          orderId: payload.orderId
+        }
+      })
+
+      const AdditionalPayload = {
+        discount: orders.value.discount
+      }
+
+      const AnotherPayload = {
+        quantity: orders.value.resource?.currentQuantity,
+        discount: orders.value.discount,
+        internal: true
+      }
+
+      await $fetch('/api/order-service', {
+        method: 'PUT',
+        body: AdditionalPayload,
+        query: {
+          id: payload.orderId
+        }
+      })
+
+      await $fetch('/api/order-resources', {
+        method: 'PUT',
+        body: AnotherPayload,
+        query: {
+          id: payload.orderId
+        }
+      })
+
+      toast.add({
+        severity: "success",
+        summary: "Updated",
+        detail: "Order successfully updated",
+        life: 3000
+      })
+
+    } catch (error){
+      toast.add({
+        severity: "error",
+        summary: "server error",
+        detail: "Order creation/update failed",
+        life: 3000
+      })
+      console.error('Order creation failed', error)
+    }
+  }
+  serviceDialog.value = false
+  await fetchData()
+  orders.value = {}
 }
 
 async function editItem(){
@@ -329,6 +384,9 @@ async function fetchServicesAndResources(id){
     ])
     services.value[id] = serviceData
     resources.value[id] = resourceData
+
+    orders.value.service = orderServices.find(s => s.id === services.id);
+    orders.value.resource = orderResources.find(r => r.id === resources.id);
   } catch (e){
     console.error('Error fetching services-resources')
   }
@@ -377,6 +435,12 @@ function confirmStatusChange(order, action){
   confirmationDialog.value = true
 }
 
+function completeOrder(order, action){
+  selectedOrder.value = order
+  dialogActionType.value = action
+  completionDialog.value = true
+}
+
 const dialogHeader = computed(() => {
   if (dialogActionType.value === 'cancel') return 'Cancel Order?'
   if (selectedOrder.value?.status?.id === 1) return 'Accept Order?'
@@ -398,51 +462,101 @@ const noButtonClass = computed(() => {
 
 async function changeStatus(){
   const orderId = selectedOrder.value?.id
-  let updatePayload = {}
+  let statusId
 
   switch (dialogActionType.value) {
     case 'accept':
-      updatePayload = { statusId: 2 }
+      statusId = 2
       break
     case 'complete':
-      updatePayload = { statusId: 3 }
+      statusId = 3
       break
     case 'cancel':
-      updatePayload = { statusId: 4 }
+      statusId = 4
       break
   }
 
-  if (selectedOrder.value) {
-    selectedOrder.value.status = { id: updatePayload.statusId }
+  if (selectedOrder.value && confirmationDialog.value) {
+    const payload = {
+      name: selectedOrder.value.name,
+      assignedEmployeeId: selectedOrder.value.assignedEmployee?.id,
+      typeId: selectedOrder.value.type?.id,
+      statusId: statusId,
+      isPaid: selectedOrder.value.isPaid,
+      discount: selectedOrder.value.discount,
+      paymentMethodId: selectedOrder.value.paymentMethod?.id,
+      paymentDueDate: selectedOrder.value.paymentDueDate,
+      notes: selectedOrder.value.notes
+    }
+
+    try{
+      await $fetch('/api/getOrders', {
+        method: 'PUT',
+        body: payload,
+        query: {
+          orderId: orderId
+        }
+      })
+
+      toast.add({
+        severity: "success",
+        summary: "Success",
+        detail: "Status has been changed",
+        life: 3000
+      })
+    } catch (error){
+      toast.add({
+        severity: "error",
+        summary: "Server error",
+        detail: "Failed to change status",
+        life: 3000
+      })
+      console.log(error)
+    }
   }
 
-  console.log(selectedOrder.value)
+  if (selectedOrder.value && completionDialog.value) {
+    const payload = {
+      name: selectedOrder.value.name,
+      assignedEmployeeId: selectedOrder.value.assignedEmployee?.id,
+      typeId: selectedOrder.value.type?.id,
+      statusId: statusId,
+      isPaid: selectedOrder.value.isPaid,
+      discount: orders.value.discount,
+      paymentMethodId: orders.value.paymentMethod?.id,
+      paymentDueDate: selectedOrder.value.paymentDueDate,
+      notes: selectedOrder.value.notes
+    }
 
-  try{
-    // await $fetch('/api/getOrders', {
-    //   method: 'PUT',
-    //   body: updatePayload,
-    //   query: {
-    //     orderId: orderId
-    //   }
-    // })
+    try{
+      await $fetch('/api/getOrders', {
+        method: 'PUT',
+        body: payload,
+        query: {
+          orderId: orderId
+        }
+      })
 
-    toast.add({
-      severity: "success",
-      summary: "Success",
-      detail: "Status has been changed",
-      life: 3000
-    })
-  } catch (error){
-    toast.add({
-      severity: "error",
-      summary: "Server error",
-      detail: "Failed to change status",
-      life: 3000
-    })
-    console.log(error)
+      toast.add({
+        severity: "success",
+        summary: "Success",
+        detail: "Order has been completed",
+        life: 3000
+      })
+    } catch (error){
+      toast.add({
+        severity: "error",
+        summary: "Server error",
+        detail: "Failed to complete order",
+        life: 3000
+      })
+      console.log(error)
+    }
   }
+
   confirmationDialog.value = false
+  completionDialog.value = false
+  orders.value = {}
   await fetchData()
 }
 
@@ -539,7 +653,7 @@ async function changeStatus(){
                     </div>
                     <Button @click="confirmStatusChange(item, 'cancel')" v-if="item?.status?.id === 2 || item?.status?.id === 1" class="my-4 me-3" variant="outlined" severity="danger">Cancel</Button>
                     <Button @click="confirmStatusChange(item, 'accept')" v-if="item?.status?.id === 1" class="my-4 me-3" severity="info">Accept</Button>
-                    <Button @click="confirmStatusChange(item, 'complete')" v-if="item?.status?.id === 2" class="my-4 me-3" severity="success">Complete</Button>
+                    <Button @click="completeOrder(item, 'complete')" v-if="item?.status?.id === 2" class="my-4 me-3" severity="success">Complete</Button>
                   </AccordionTab>
                 </Accordion>
               </template>
@@ -573,23 +687,7 @@ async function changeStatus(){
         </div>
 
         <div class="grid grid-cols-12 gap-4">
-<!--          <div class="col-span-6">-->
-<!--            <label for="rate" class="block font-bold mb-3">Discount</label>-->
-<!--            <InputNumber-->
-<!--                id="discount"-->
-<!--                type="number"-->
-<!--                v-model.number="orders.discount"-->
-<!--                autofocus-->
-<!--                locale="en-US"-->
-<!--                :min="0"-->
-<!--                :max="1"-->
-<!--                :step="0.05"-->
-<!--                mode="decimal"-->
-<!--                fluid-->
-<!--                show-buttons-->
-<!--                button-layout="horizontal"-->
-<!--            />-->
-<!--          </div>-->
+
 
           <div class="">
             <label for="executor" class="block font-bold mb-3">Executor</label>
@@ -604,12 +702,12 @@ async function changeStatus(){
 
         <div class="grid grid-cols-12">
           <div class="col-span-5">
-            <label for="orderStatuses" class="block font-bold mb-3">Resources</label>
+            <label for="orderStatuses" class="block font-bold mb-3">Services</label>
             <Select fluid id="orderStatuses" v-model="orders.service" :options="orderServices" optionLabel="name" placeholder="Select" />
           </div>
 
           <div class="col-start-7 col-span-6">
-            <label for="paymentMethodId" class="block font-bold mb-3">Services</label>
+            <label for="paymentMethodId" class="block font-bold mb-3">Resources</label>
             <Select fluid id="paymentMethodId" v-model="orders.resource" :options="orderResources" optionLabel="name" placeholder="Select" />
           </div>
         </div>
@@ -618,7 +716,6 @@ async function changeStatus(){
           <label for="name" class="block font-bold mb-3">Notes</label>
           <Textarea id="name" v-model.trim="orders.notes" required="true" autofocus fluid />
         </div>
-
       </div>
 
       <template #footer>
@@ -640,6 +737,39 @@ async function changeStatus(){
             @click="confirmationDialog = false"
         />
       </div>
+    </Dialog>
+
+    <Dialog v-model:visible="completionDialog" :style="{ width: '450px' }" header="Complete order" :modal="true">
+      <div class="my-3"><strong>Price: </strong>{{selectedOrder?.totalPrice}}</div>
+      <div class="grid grid-cols-12 gap-1">
+        <div class="col-span-6">
+          <label for="rate" class="block font-bold mb-3">Discount</label>
+          <InputNumber
+              id="discount"
+              type="number"
+              v-model.number="orders.discount"
+              autofocus
+              locale="en-US"
+              :min="0"
+              :max="100"
+              :step="5"
+              mode="decimal"
+              fluid
+              show-buttons
+              button-layout="horizontal"
+          />
+        </div>
+        <div class="col-start-8 col-span-6">
+          <label for="orderTypes" class="block font-bold mb-3">Payment method</label>
+          <Select fluid id="orderTypes" v-model="orders.paymentMethod" :options="orderPayment" optionLabel="name" placeholder="Select a Type" />
+        </div>
+      </div>
+
+      <template #footer>
+        <Button label="Cancel" icon="pi pi-times" severity="danger" @click="hideDialog">Cancel</Button>
+        <Button label="Complete" icon="pi pi-check" severity="success" @click="changeStatus">Complete</Button>
+      </template>
+
     </Dialog>
 
   </div>

@@ -37,13 +37,6 @@ const mainItems= ref([
     }
   },
   {
-    label: "Schedule",
-    icon: PrimeIcons.CALENDAR,
-    command: () => {
-      router.push('/schedule')
-    }
-  },
-  {
     label: "Services",
     icon: PrimeIcons.LIST,
     command: () => {
@@ -69,6 +62,13 @@ const mainItems= ref([
     icon: "pi pi-users",
     command: () => {
       router.push('/clients')
+    }
+  },
+  {
+    label: "Business Model",
+    icon: "pi pi-briefcase",
+    command: () => {
+      router.push('/businessModel')
     }
   }
 ])
