@@ -32,9 +32,9 @@ const fetchData = async() => {
   try {
     loading.value = true;
     products.value = Array.from({length: 10})
-    const {data, error} = await useFetch('/api/resources')
-    if (data?.value) {
-      products.value = data.value.items;
+    const data = await $fetch('/api/resources')
+    if (data) {
+      products.value = data?.items;
     }
   } catch(error) {
       toast.add({
@@ -140,7 +140,6 @@ async function saveResource() {
 
     resourceDialog.value = false
     await fetchData()
-    products.value = [...products.value, resource]
     resource.value = {}
   }
 }
@@ -188,7 +187,8 @@ function exportCSV() {
           :rowsPerPageOptions="[5, 10, 25]"
           currentPageReportTemplate="Showing {first} to {last} of {totalRecords} resources"
           @row-click="onRowClick"
-          :row-class="() => 'hover:bg-blue-50 cursor-pointer'"
+          :row-hover="true"
+          :row-class="() => 'cursor-pointer '"
       >
 
         <template #header>

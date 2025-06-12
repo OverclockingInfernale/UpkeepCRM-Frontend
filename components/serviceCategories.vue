@@ -21,9 +21,9 @@ const fetchData = async() => {
   products.value = Array.from({length: 10})
   loading.value = true
   try {
-    const {data} = await useFetch('/api/serviceCategories');
-    if (data?.value.items) {
-      products.value = data?.value.items
+    const data = await $fetch('/api/serviceCategories');
+    if (data) {
+      products.value = data?.items
     } else {
       console.warn('No items in response');
     }
@@ -99,7 +99,6 @@ async function saveItem() {
 
     serviceDialog.value = false
     await fetchData()
-    products.value = [...products.value, serviceTypes]
     serviceTypes.value = {}
   }
 }
@@ -143,11 +142,12 @@ function exportCSV() {
           :rowsPerPageOptions="[5, 10, 25]"
           currentPageReportTemplate="Showing {first} to {last} of {totalRecords} service categories"
           @row-click="onRowClick"
-          :row-class="() => 'hover:bg-blue-50 cursor-pointer'"
+          :row-hover="true"
+          :row-class="() => 'cursor-pointer '"
       >
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
-            <h4 class="m-0">Manage services</h4>
+            <h4 class="m-0">Manage service categories</h4>
             <IconField>
               <InputIcon>
                 <i class="pi pi-search" />

@@ -25,9 +25,9 @@ const fetchData = async() => {
   try {
     loading.value = true;
     products.value = Array.from({length: 10})
-    const {data, error} = await useFetch('/api/clients')
-    if (data?.value) {
-      products.value = data.value.items;
+    const data = await $fetch('/api/clients')
+    if (data) {
+      products.value = data?.items;
     }
   } catch(error) {
     toast.add({
@@ -40,9 +40,9 @@ const fetchData = async() => {
   }
 
   try{
-    const {data, error} = await useFetch('/api/clientPriority')
-    if(data?.value){
-      clientPriority.value = data.value.items
+    const data = await $fetch('/api/clientPriority')
+    if(data){
+      clientPriority.value = data?.items
     }
   } catch (error) {
     toast.add({
@@ -55,9 +55,9 @@ const fetchData = async() => {
   }
 
   try{
-    const {data, error} = await useFetch('api/clientStatus')
-    if(data?.value){
-      clientStatuses.value = data.value.items
+    const data = await $fetch('api/clientStatus')
+    if(data){
+      clientStatuses.value = data?.items
     }
   } catch (error) {
     toast.add({
@@ -181,8 +181,8 @@ function exportCSV() {
           :rowsPerPageOptions="[5, 10, 25]"
           currentPageReportTemplate="Showing {first} to {last} of {totalRecords} clients"
           @row-click="onRowClick"
-          :row-class="() => 'hover:bg-blue-50 cursor-pointer'"
-      >
+          :row-hover="true"
+          :row-class="() => 'cursor-pointer '"      >
 
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">

@@ -35,6 +35,7 @@ const lazyParams = ref({
 const selectedOrder = ref(null)
 const isCancelTriggered = ref(false)
 const dialogActionType = ref(null) // accept, complete, cancel for status change
+const searchQuery = ref('')
 
 
 
@@ -218,7 +219,7 @@ function hideDialog() {
 
 async function saveItem() {
   submitted.value = true;
-  if (orders?.value && !isEditMode) {
+  if (orders?.value && !isEditMode.value) {
     try {
       const payload = {
         name: orders.value.name,
@@ -274,7 +275,7 @@ async function saveItem() {
       console.error('Order creation failed', error)
     }
   }
-  if (orders?.value && isEditMode) {
+  if (orders?.value && isEditMode.value) {
     try {
       const payload = {
         orderId: orders.value.id,
@@ -560,6 +561,18 @@ async function changeStatus(){
   await fetchData()
 }
 
+const filteredItems = computed(() => {
+  if (!searchQuery.value) return items.value
+
+  const query = searchQuery.value.toLowerCase()
+  return items.value.filter(
+      item =>
+          item.name?.toLowerCase().includes(query)
+  )
+})
+
+
+
 </script>
 
 <template>
@@ -588,12 +601,12 @@ async function changeStatus(){
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
             <h4 class="m-0">Orders</h4>
-            <IconField>
-              <InputIcon>
-                <i class="pi pi-search" />
-              </InputIcon>
-              <InputText v-model="filters['global'].value" placeholder="Search..." />
-            </IconField>
+<!--            <IconField>-->
+<!--              <InputIcon>-->
+<!--                <i class="pi pi-search" />-->
+<!--              </InputIcon>-->
+<!--              <InputText v-model="searchQuery" placeholder="Search..." />-->
+<!--            </IconField>-->
           </div>
         </template>
 
@@ -605,13 +618,26 @@ async function changeStatus(){
           >
             <Card class="mb-4 shadow-md" >
               <template #title>
-                <div class="flex justify-between items-center">
+                <div class="flex flex-wrap justify-between items-center gap-2">
                   <Skeleton v-if="loading" width="16rem" />
                   <template v-else>
                     <span class="font-bold text-lg">{{ item?.name }}</span>
-                    <div>
-                      <Tag class="text-lg" label="status" :severity="statusColor(item?.status?.id)" raised>{{item?.status?.name || 'No status'}}</Tag>
-                      <Button @click="editOrder(item)" icon="pi pi-pen-to-square" variant="outlined" class="mx-2" severity="contrast"></Button>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                      <Tag
+                          class="text-lg"
+                          label="status"
+                          :severity="statusColor(item?.status?.id)"
+                          raised
+                      >
+                        {{ item?.status?.name || 'No status' }}
+                      </Tag>
+                      <Button
+                          @click="editOrder(item)"
+                          icon="pi pi-pen-to-square"
+                          variant="outlined"
+                          severity="contrast"
+                      />
                     </div>
                   </template>
                 </div>
@@ -620,6 +646,7 @@ async function changeStatus(){
                   {{ item?.client?.name || 'No client' }}
                 </div>
               </template>
+
 
               <template #content v-if="items.length">
                 <Accordion

@@ -19,9 +19,9 @@ const fetchData = async() => {
   items.value = Array.from({length: 10})
   loading.value = true
   try {
-    const {data} = await useFetch('/api/resourceTypes');
-    if (data?.value.items) {
-      items.value = data?.value.items
+    const data = await $fetch('/api/resourceTypes');
+    if (data) {
+      items.value = data?.items
     } else {
       console.warn('No items in response');
     }
@@ -29,10 +29,10 @@ const fetchData = async() => {
     toast.add({
       severity: "error",
       summary: "server error",
-      detail: "Failed to fetch service categories",
+      detail: "Failed to fetch resource types",
       life: 3000
     })
-    console.error('Failed to fetch service categories', error);
+    console.error('Failed to fetch resource types', error);
   }
   setTimeout(() => {
     loading.value = false
@@ -96,7 +96,6 @@ async function saveItem() {
 
     serviceDialog.value = false
     await fetchData()
-    items.value = [...items.value, resourceTypes]
     resourceTypes.value = {}
   }
 }
@@ -140,7 +139,8 @@ function exportCSV() {
           :rowsPerPageOptions="[5, 10, 25]"
           currentPageReportTemplate="Showing {first} to {last} of {totalRecords} resource Types"
           @row-click="onRowClick"
-          :row-class="() => 'hover:bg-blue-50 cursor-pointer'"
+          :row-hover="true"
+          :row-class="() => 'cursor-pointer '"
       >
         <template #header>
           <div class="flex flex-wrap gap-2 items-center justify-between">
